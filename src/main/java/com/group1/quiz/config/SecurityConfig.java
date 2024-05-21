@@ -63,9 +63,9 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authenticationManager(authenticationManager)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/token").permitAll()
+                        .requestMatchers("/auth").permitAll()
                         .requestMatchers("/api/user/**").hasRole(String.valueOf(Role.ADMIN))
-                        .requestMatchers("/api/hello/").permitAll()
+                        .requestMatchers("/api/migrate/").permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
