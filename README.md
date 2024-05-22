@@ -1,26 +1,23 @@
 # Getting Started
 
-### Reference Documentation
+### Setup Key for JWT Login
++ Open bash shell (recommended bash shell)
++ Go to "**main/resources/Certification**" file
++ Run command "**openssl genrsa -out keypair.pem 2048**"
++ Run command "**openssl rsa -in keypair.pem -pubout -out public.pem**"
++ Run command "**openssl pkcs8 -topk8 -inform PEM -nocrypt -in keypair.pem -out private.pem**"
++ Afterward you could delete the keypair.pem
 
-For further reference, please consider the following sections:
+### Setup application.properties
++ spring.application.name=quiz
++ rsa.rsa-public-key=classpath:Certification/public.pem
++ rsa.rsa-private-key=classpath:Certification/private.pem
++ spring.data.mongodb.uri= > (your mongodb atlas uri)
++ spring.data.mongodb.database= (your database name)
 
-* [Official Apache Maven documentation](https://maven.apache.org/guides/index.html)
-* [Spring Boot Maven Plugin Reference Guide](https://docs.spring.io/spring-boot/docs/3.2.5/maven-plugin/reference/html/)
-* [Create an OCI image](https://docs.spring.io/spring-boot/docs/3.2.5/maven-plugin/reference/html/#build-image)
-* [Spring Data MongoDB](https://docs.spring.io/spring-boot/docs/3.2.5/reference/htmlsingle/index.html#data.nosql.mongodb)
-* [OAuth2 Resource Server](https://docs.spring.io/spring-boot/docs/3.2.5/reference/htmlsingle/index.html#web.security.oauth2.server)
-* [Spring Security](https://docs.spring.io/spring-boot/docs/3.2.5/reference/htmlsingle/index.html#web.security)
-* [Spring Web](https://docs.spring.io/spring-boot/docs/3.2.5/reference/htmlsingle/index.html#web)
+> Please Copy and Paste the above list to your application.properties file
+> #### Note: please set up account on <https://www.mongodb.com> and copy your mongoDB uri
+>       spring.data.mongodb.uri= <your uri>
 
-### Guides
 
-The following guides illustrate how to use some features concretely:
-
-* [Accessing Data with MongoDB](https://spring.io/guides/gs/accessing-data-mongodb/)
-* [Securing a Web Application](https://spring.io/guides/gs/securing-web/)
-* [Spring Boot and OAuth2](https://spring.io/guides/tutorials/spring-boot-oauth2/)
-* [Authenticating a User with LDAP](https://spring.io/guides/gs/authenticating-ldap/)
-* [Building a RESTful Web Service](https://spring.io/guides/gs/rest-service/)
-* [Serving Web Content with Spring MVC](https://spring.io/guides/gs/serving-web-content/)
-* [Building REST services with Spring](https://spring.io/guides/tutorials/rest/)
 
