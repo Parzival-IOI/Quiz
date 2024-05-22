@@ -1,7 +1,7 @@
 package com.group1.quiz.config;
 
 
-import com.group1.quiz.model.Role;
+import com.group1.quiz.model.UserRole;
 import com.group1.quiz.service.UserService;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
@@ -63,9 +63,10 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authenticationManager(authenticationManager)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/token").permitAll()
-                        .requestMatchers("/api/user/**").hasRole(String.valueOf(Role.ADMIN))
-                        .requestMatchers("/api/hello/").permitAll()
+                        .requestMatchers("/auth").permitAll()
+                        .requestMatchers("/migrate").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/api/user/**").hasRole(String.valueOf(UserRole.ADMIN))
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))

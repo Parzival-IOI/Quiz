@@ -18,7 +18,7 @@ public class QuestionModel {
     private String id;
     private String question;
     private String type;
-    private String quiz_id;
-    private Date created_at;
-    private Date updated_at;
+    private String quizId;
+    private Date createdAt;
+    private Date updatedAt;
 }
