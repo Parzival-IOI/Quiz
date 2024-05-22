@@ -1,5 +1,6 @@
-package com.group1.quiz.dataTransferObject;
+package com.group1.quiz.dataTransferObject.questionDTO;
 
+import com.group1.quiz.dataTransferObject.answerDTO.AnswerRequest;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;

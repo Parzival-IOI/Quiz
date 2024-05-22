@@ -1,10 +1,9 @@
 package com.group1.quiz.service;
 
-import com.group1.quiz.model.Role;
+import com.group1.quiz.model.UserRole;
 import com.group1.quiz.model.UserModel;
 import com.group1.quiz.repository.UserRepository;
 import java.util.Optional;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -21,7 +20,7 @@ public class MigrateService {
             UserModel user = new UserModel();
             user.setUsername("admin");
             user.setPassword(new BCryptPasswordEncoder().encode("admin"));
-            user.setRole(Role.ADMIN);
+            user.setRole(UserRole.ADMIN);
             userRepository.save(user);
         } else {
             throw new Exception("Username already exists");

@@ -1,4 +1,4 @@
-package com.group1.quiz.dataTransferObject;
+package com.group1.quiz.dataTransferObject.answerDTO;
 
 import lombok.Getter;
 import lombok.Setter;

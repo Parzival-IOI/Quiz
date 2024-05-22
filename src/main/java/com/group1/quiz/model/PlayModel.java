@@ -17,8 +17,8 @@ public class PlayModel {
     @Id
     private String id;
     private double score;
-    private String user_id;
-    private String quiz_id;
-    private Date created_at;
-    private Date updated_at;
+    private String userId;
+    private String quizId;
+    private Date createdAt;
+    private Date updatedAt;
 }

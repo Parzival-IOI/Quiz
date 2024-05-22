@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 @Document(value="quizzes")
 @AllArgsConstructor
@@ -21,8 +22,9 @@ public class QuizModel {
     private String id;
     private String name;
     private String description;
-    private String visibility;
-    private String user_id;
-    private Date created_at;
-    private Date updated_at;
+    @Field(name="visibility")
+    private QuizVisibility visibility;
+    private String userId;
+    private Date createdAt;
+    private Date updatedAt;
 }

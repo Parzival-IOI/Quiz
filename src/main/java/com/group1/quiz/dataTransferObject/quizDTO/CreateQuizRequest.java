@@ -1,5 +1,6 @@
-package com.group1.quiz.dataTransferObject;
+package com.group1.quiz.dataTransferObject.quizDTO;
 
+import com.group1.quiz.dataTransferObject.questionDTO.QuestionRequest;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,6 +13,5 @@ public class CreateQuizRequest {
     private String name;
     private String description;
     private String visibility;
-    private String user_id;
     private List<QuestionRequest> questions;
 }

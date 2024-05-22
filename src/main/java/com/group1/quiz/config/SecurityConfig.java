@@ -1,7 +1,7 @@
 package com.group1.quiz.config;
 
 
-import com.group1.quiz.model.Role;
+import com.group1.quiz.model.UserRole;
 import com.group1.quiz.service.UserService;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
@@ -64,8 +64,8 @@ public class SecurityConfig {
                 .authenticationManager(authenticationManager)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth").permitAll()
-                        .requestMatchers("/api/user/**").hasRole(String.valueOf(Role.ADMIN))
-                        .requestMatchers("/api/migrate/").permitAll()
+                        .requestMatchers("/migrate").permitAll()
+                        .requestMatchers("/api/user/**").hasRole(String.valueOf(UserRole.ADMIN))
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))

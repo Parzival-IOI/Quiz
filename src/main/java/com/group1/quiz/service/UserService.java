@@ -1,14 +1,13 @@
 package com.group1.quiz.service;
 
 import com.group1.quiz.dataTransferObject.UserDto;
-import com.group1.quiz.model.Role;
+import com.group1.quiz.model.UserRole;
 import com.group1.quiz.model.UserModel;
 import com.group1.quiz.repository.UserRepository;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -37,7 +36,7 @@ public class UserService implements UserDetailsService {
             return org.springframework.security.core.userdetails.User.builder()
                     .username(defaultUsername)
                     .password(defaultPassword)
-                    .roles(String.valueOf(Role.ADMIN))
+                    .roles(String.valueOf(UserRole.ADMIN))
                     .build();
         }
         return null;
@@ -47,5 +46,9 @@ public class UserService implements UserDetailsService {
         String encodedPassword = new BCryptPasswordEncoder().encode(userModel.getPassword());
         userModel.setPassword(encodedPassword);
         userRepository.save(userModel);
+    }
+
+    public void deleteUser(String id) {
+        userRepository.deleteById(id);
     }
 }

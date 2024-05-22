@@ -17,8 +17,8 @@ public class AnswerModel {
     @Id
     private String id;
     private String answer;
-    private boolean is_correct;
-    private String question_id;
-    private Date created_at;
-    private Date updated_at;
+    private boolean isCorrect;
+    private String questionId;
+    private Date createdAt;
+    private Date updatedAt;
 }
