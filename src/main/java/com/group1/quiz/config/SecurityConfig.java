@@ -1,7 +1,7 @@
 package com.group1.quiz.config;
 
 
-import com.group1.quiz.model.UserRole;
+import com.group1.quiz.enums.UserRoleEnum;
 import com.group1.quiz.service.UserService;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
@@ -66,7 +66,7 @@ public class SecurityConfig {
                         .requestMatchers("/auth").permitAll()
                         .requestMatchers("/migrate").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
-                        .requestMatchers("/api/user/**").hasRole(String.valueOf(UserRole.ADMIN))
+                        .requestMatchers("/api/user/**").hasRole(UserRoleEnum.ADMIN.getValue())
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))

@@ -1,6 +1,6 @@
 package com.group1.quiz.service;
 
-import com.group1.quiz.model.UserRole;
+import com.group1.quiz.enums.UserRoleEnum;
 import com.group1.quiz.model.UserModel;
 import com.group1.quiz.repository.UserRepository;
 import java.util.Optional;
@@ -20,7 +20,7 @@ public class MigrateService {
             UserModel user = new UserModel();
             user.setUsername("admin");
             user.setPassword(new BCryptPasswordEncoder().encode("admin"));
-            user.setRole(UserRole.ADMIN);
+            user.setRole(UserRoleEnum.ADMIN);
             userRepository.save(user);
         } else {
             throw new Exception("Username already exists");

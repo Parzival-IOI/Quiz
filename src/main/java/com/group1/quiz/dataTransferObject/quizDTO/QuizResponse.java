@@ -1,7 +1,7 @@
 package com.group1.quiz.dataTransferObject.quizDTO;
 
 import com.group1.quiz.dataTransferObject.questionDTO.QuestionResponse;
-import com.group1.quiz.model.QuizVisibility;
+import com.group1.quiz.enums.QuizVisibilityEnum;
 import java.util.Date;
 import java.util.List;
 import lombok.Builder;
@@ -15,7 +15,7 @@ public class QuizResponse {
     private String id;
     private String name;
     private String description;
-    private QuizVisibility visibility;
+    private QuizVisibilityEnum visibility;
     private List<QuestionResponse> questions;
     private Date createdAt;
     private Date updatedAt;

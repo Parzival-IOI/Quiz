@@ -6,19 +6,19 @@ import com.group1.quiz.dataTransferObject.answerDTO.AnswerResponse;
 import com.group1.quiz.dataTransferObject.questionDTO.QuestionResponse;
 import com.group1.quiz.dataTransferObject.quizDTO.CreateQuizRequest;
 import com.group1.quiz.dataTransferObject.questionDTO.QuestionRequest;
-import com.group1.quiz.dataTransferObject.quizDTO.QuizOrderByRequest;
+import com.group1.quiz.enums.QuizOrderEnum;
 import com.group1.quiz.dataTransferObject.quizDTO.QuizResponse;
+import com.group1.quiz.dataTransferObject.quizDTO.QuizTableResponse;
 import com.group1.quiz.dataTransferObject.quizDTO.QuizzesResponse;
 import com.group1.quiz.model.AnswerModel;
 import com.group1.quiz.model.QuestionModel;
 import com.group1.quiz.model.QuizModel;
-import com.group1.quiz.model.QuizVisibility;
+import com.group1.quiz.enums.QuizVisibilityEnum;
 import com.group1.quiz.model.UserModel;
 import com.group1.quiz.repository.AnswerRepository;
 import com.group1.quiz.repository.QuestionRepository;
 import com.group1.quiz.repository.QuizRepository;
 import com.group1.quiz.repository.UserRepository;
-import com.group1.quiz.util.ResponseStatus;
 import java.security.Principal;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -26,6 +26,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
@@ -59,23 +60,28 @@ public class QuizService {
         }
     }
 
-    public List<QuizzesResponse> getQuizzes(QuizOrderByRequest orderBy, int page, int size, String search) throws Exception {
+    public QuizTableResponse getQuizzes(QuizOrderEnum orderBy, int page, int size, String search) throws Exception {
         Query query = new Query();
-        if(!search.equals("0")) {
+        long count;
+        if(!StringUtils.isEmpty(search)) {
             query.addCriteria(Criteria.where("name").is(search));
         }
 
-        query.with(Sort.by(Sort.Direction.ASC, String.valueOf(orderBy).toLowerCase()));
+        query.with(Sort.by(Sort.Direction.ASC, orderBy.getValue()));
 
         query.with(PageRequest.of(page, size));
 
         List<QuizModel> quizModels = mongoTemplate.find(query, QuizModel.class);
 
-        List<QuizzesResponse> quizzesResponses = new ArrayList<>();
-        for(QuizModel quizModel : quizModels) {
-            quizzesResponses.add(QuizResponseMapping(quizModel));
+        if (!StringUtils.isEmpty(search)) {
+            count = quizModels.size();
+        } else {
+            count = quizRepository.countAllDocuments();
         }
-        return quizzesResponses;
+        return QuizTableResponse.builder()
+                .quizzes(quizModels.stream().map(this::QuizResponseMapping).toList())
+                .columns(count)
+                .build();
     }
 
     private QuizzesResponse QuizResponseMapping(QuizModel quizModel) {
@@ -96,10 +102,7 @@ public class QuizService {
             List<QuestionResponse> questionResponses = new ArrayList<>();
             for(QuestionModel questionModel : questionModels) {
                 List<AnswerModel> answerModels = answerRepository.findByQuestionId(questionModel.getId());
-                List<AnswerResponse> answerResponses = new ArrayList<>();
-                for(AnswerModel answerModel : answerModels) {
-                    answerResponses.add(answerResponseMapping(answerModel));
-                }
+                List<AnswerResponse> answerResponses = answerModels.stream().map(this::answerResponseMapping).toList();
                 questionResponses.add(questionResponseMapping(questionModel, answerResponses));
             }
             return quizResponseMapping(quizModel.get(), questionResponses);
@@ -148,7 +151,7 @@ public class QuizService {
             QuizModel quizModel = new QuizModel();
             quizModel.setName(createQuizRequest.getName());
             quizModel.setDescription(createQuizRequest.getDescription());
-            quizModel.setVisibility(QuizVisibility.valueOf(createQuizRequest.getVisibility()));
+            quizModel.setVisibility(QuizVisibilityEnum.valueOf(createQuizRequest.getVisibility()));
             quizModel.setUserId(userModel.get().getId());
             quizModel.setCreatedAt(Date.from(Instant.now()));
             quizModel.setUpdatedAt(Date.from(Instant.now()));
@@ -184,7 +187,5 @@ public class QuizService {
         }
 
     }
-
-
 
 }

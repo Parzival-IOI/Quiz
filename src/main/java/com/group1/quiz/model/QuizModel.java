@@ -1,5 +1,6 @@
 package com.group1.quiz.model;
 
+import com.group1.quiz.enums.QuizVisibilityEnum;
 import java.util.Date;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,7 +24,7 @@ public class QuizModel {
     private String name;
     private String description;
     @Field(name="visibility")
-    private QuizVisibility visibility;
+    private QuizVisibilityEnum visibility;
     private String userId;
     private Date createdAt;
     private Date updatedAt;

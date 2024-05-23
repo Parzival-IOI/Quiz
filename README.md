@@ -16,7 +16,10 @@
 + spring.data.mongodb.database= (your database name)
 
 > Please Copy and Paste the above list to your application.properties file
-> #### Note: please set up account on <https://www.mongodb.com> and copy your mongoDB uri
+> #### Note:
+> + please set up account on <https://www.mongodb.com>
+> + copy your mongoDB uri and replace with \<your uri> 
+> 
 >       spring.data.mongodb.uri= <your uri>
 
 
