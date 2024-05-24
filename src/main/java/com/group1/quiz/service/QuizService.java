@@ -6,6 +6,7 @@ import com.group1.quiz.dataTransferObject.answerDTO.AnswerResponse;
 import com.group1.quiz.dataTransferObject.questionDTO.QuestionResponse;
 import com.group1.quiz.dataTransferObject.quizDTO.CreateQuizRequest;
 import com.group1.quiz.dataTransferObject.questionDTO.QuestionRequest;
+import com.group1.quiz.dataTransferObject.quizDTO.UpdateQuizRequest;
 import com.group1.quiz.enums.QuizOrderEnum;
 import com.group1.quiz.dataTransferObject.quizDTO.QuizResponse;
 import com.group1.quiz.dataTransferObject.quizDTO.QuizTableResponse;
@@ -187,4 +188,32 @@ public class QuizService {
 
     }
 
+    public void updateQuiz(String id, UpdateQuizRequest updateQuizRequest) throws Exception {
+        Optional<QuizModel> quizModel = quizRepository.findById(id);
+        if(quizModel.isPresent()) {
+            QuizModel quiz = QuizModel.builder()
+                    .id(quizModel.get().getId())
+                    .name(updateQuizRequest.getName())
+                    .description(updateQuizRequest.getDescription())
+                    .visibility(updateQuizRequest.getVisibility())
+                    .userId(quizModel.get().getUserId())
+                    .createdAt(quizModel.get().getCreatedAt())
+                    .updatedAt(Date.from(Instant.now()))
+                    .build();
+            quizRepository.save(quiz);
+        }
+        else {
+            throw new Exception("Quiz Not Found");
+        }
+    }
+
+    public void deleteQuiz(String id) throws Exception {
+        Optional<QuizModel> quizModel = quizRepository.findById(id);
+        if(quizModel.isPresent()) {
+            quizRepository.deleteById(quizModel.get().getId());
+        }
+        else {
+            throw new Exception("Quiz Not Found");
+        }
+    }
 }
