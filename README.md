@@ -1,20 +1,20 @@
 # Getting Started
 
 ### Setup Key for JWT Login
-+ Open bash shell (recommended bash shell)
++ Open bash shell (recommended bash shell for openssl)
 + From Quiz folder run
 
       cd src/main/resources/Certification
 + Run command for generating keypair.pem
 
       openssl genrsa -out keypair.pem 2048
-+ Run command for generation public.pem
++ Run command for generation public.pem (public key)
 
       openssl rsa -in keypair.pem -pubout -out public.pem
-+ Run command
++ Run command for generating private.pem (private key)
 
       openssl pkcs8 -topk8 -inform PEM -nocrypt -in keypair.pem -out private.pem
-+ Afterward you could delete the keypair.pem
++ Afterward you can delete the keypair.pem
 
 ### Setup application.properties
 You can rename application.yml to application.properties, if you prefer .properties file
