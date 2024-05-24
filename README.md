@@ -1,26 +1,48 @@
 # Getting Started
 
 ### Setup Key for JWT Login
-+ Open bash shell (recommended bash shell)
-+ Go to "**main/resources/Certification**" file
-+ Run command "**openssl genrsa -out keypair.pem 2048**"
-+ Run command "**openssl rsa -in keypair.pem -pubout -out public.pem**"
-+ Run command "**openssl pkcs8 -topk8 -inform PEM -nocrypt -in keypair.pem -out private.pem**"
-+ Afterward you could delete the keypair.pem
++ Open bash shell (recommended bash shell for openssl)
++ From Quiz folder run
+
+      cd src/main/resources/Certification
++ Run command for generating keypair.pem
+
+      openssl genrsa -out keypair.pem 2048
++ Run command for generation public.pem (public key)
+
+      openssl rsa -in keypair.pem -pubout -out public.pem
++ Run command for generating private.pem (private key)
+
+      openssl pkcs8 -topk8 -inform PEM -nocrypt -in keypair.pem -out private.pem
++ Afterward you can delete the keypair.pem
 
 ### Setup application.properties
-+ spring.application.name=quiz
-+ rsa.rsa-public-key=classpath:Certification/public.pem
-+ rsa.rsa-private-key=classpath:Certification/private.pem
-+ spring.data.mongodb.uri= > (your mongodb atlas uri)
-+ spring.data.mongodb.database= (your database name)
+You can rename application.yml to application.properties, if you prefer .properties file
++ application.properties  
 
-> Please Copy and Paste the above list to your application.properties file
+      spring.application.name=quiz
+      rsa.rsa-public-key=classpath:Certification/public.pem
+      rsa.rsa-private-key=classpath:Certification/private.pem
+      spring.data.mongodb.uri= <your mongodb atlas uri>
+      spring.data.mongodb.database= <your database name>
++ application.yml
+
+      spring:
+          application:
+              name: quiz
+          data:
+              mongodb:
+                  uri: <your mongodb atlas uri>
+                  database: <your database name>
+      rsa:
+          rsa-public-key: classpath:Certification/public.pem
+          rsa-private-key: classpath:Certification/private.pem
+
+
 > #### Note:
+> + If you're using application.properties, you can delete application.yml
 > + please set up account on <https://www.mongodb.com>
-> + copy your mongoDB uri and replace with \<your uri> 
-> 
->       spring.data.mongodb.uri= <your uri>
+> + copy your mongoDB uri and replace with \<your mongodb atlas uri>
 
 
 
