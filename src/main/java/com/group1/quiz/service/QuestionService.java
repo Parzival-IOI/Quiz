@@ -1,13 +1,15 @@
 package com.group1.quiz.service;
 
-import com.group1.quiz.dataTransferObject.questionDTO.CreateQuestionRequest;
-import com.group1.quiz.dataTransferObject.questionDTO.UpdateQuestionRequest;
+import com.group1.quiz.dataTransferObject.QuestionDTO.CreateQuestionRequest;
+import com.group1.quiz.dataTransferObject.QuestionDTO.UpdateQuestionRequest;
 import com.group1.quiz.model.QuestionModel;
 import com.group1.quiz.repository.QuestionRepository;
+import com.group1.quiz.util.ResponseStatusException;
 import java.time.Instant;
 import java.util.Date;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -40,17 +42,16 @@ public class QuestionService {
             questionRepository.save(question);
         }
         else {
-            throw new Exception("Question not found");
+            throw new ResponseStatusException("Question not found", HttpStatus.NOT_FOUND);
         }
     }
 
     public void deleteQuestion(String id) throws Exception {
-        Optional<QuestionModel> questionModel = questionRepository.findById(id);
-        if (questionModel.isPresent()) {
+        if (questionRepository.existsById(id)) {
             questionRepository.deleteById(id);
         }
         else {
-            throw new Exception("Question not found");
+            throw new ResponseStatusException("Question not found", HttpStatus.NOT_FOUND);
         }
     }
 }

@@ -1,4 +1,4 @@
-package com.group1.quiz.dataTransferObject.quizDTO;
+package com.group1.quiz.dataTransferObject.QuizDTO;
 
 import java.util.List;
 import lombok.Builder;

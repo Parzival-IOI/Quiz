@@ -1,6 +1,7 @@
 package com.group1.quiz.controller;
 
 import com.group1.quiz.service.MigrateService;
+import com.group1.quiz.util.ResponseStatusException;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,9 @@ public class MigrateController {
     public ResponseEntity<?> migrate() {
         try {
             migrateService.migrate();
+        } catch (ResponseStatusException e) {
+            log.info(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), e.getCode());
         } catch (Exception e) {
             log.info(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);

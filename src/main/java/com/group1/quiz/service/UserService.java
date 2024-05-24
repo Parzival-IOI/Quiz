@@ -4,12 +4,14 @@ import com.group1.quiz.dataTransferObject.UserDto;
 import com.group1.quiz.enums.UserRoleEnum;
 import com.group1.quiz.model.UserModel;
 import com.group1.quiz.repository.UserRepository;
+import com.group1.quiz.util.ResponseStatusException;
 import java.time.Instant;
 import java.util.Date;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -45,7 +47,7 @@ public class UserService implements UserDetailsService {
     }
     public void createUser(UserDto userDto) throws Exception {
         if(userRepository.findUserByUsername(userDto.getUsername()).isPresent()) {
-            throw new Exception("Username already exists");
+            throw new ResponseStatusException("Username already exists", HttpStatus.BAD_REQUEST);
         }
         UserModel userModel = new UserModel(userDto);
         String encodedPassword = new BCryptPasswordEncoder().encode(userModel.getPassword());
@@ -54,14 +56,14 @@ public class UserService implements UserDetailsService {
     }
 
 
-    public void updateUser(String id, UserDto userDto) throws Exception {
+    public void updateUser(String id, UserDto userDto) throws ResponseStatusException {
         Optional<UserModel> userModel = userRepository.findById(id);
         if(userModel.isPresent()) {
             UserModel user = userMapping(id, userDto);
             userRepository.save(user);
         }
         else {
-            throw new Exception("User not found");
+            throw new ResponseStatusException("User not found", HttpStatus.NOT_FOUND);
         }
     }
 
@@ -76,13 +78,12 @@ public class UserService implements UserDetailsService {
                 .build() ;
     }
 
-    public void deleteUser(String id) throws Exception {
-        Optional<UserModel> userModel = userRepository.findById(id);
-        if(userModel.isPresent()) {
+    public void deleteUser(String id) throws ResponseStatusException {
+        if(userRepository.existsById(id)) {
             userRepository.deleteById(id);
         }
         else {
-            throw new Exception("User not found");
+            throw new ResponseStatusException("User not found", HttpStatus.NOT_FOUND);
         }
     }
 
