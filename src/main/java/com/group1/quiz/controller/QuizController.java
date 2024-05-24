@@ -1,6 +1,6 @@
 package com.group1.quiz.controller;
 
-import com.group1.quiz.dataTransferObject.RowLength;
+import com.group1.quiz.enums.RowLengthEnum;
 import com.group1.quiz.dataTransferObject.quizDTO.CreateQuizRequest;
 import com.group1.quiz.enums.QuizOrderEnum;
 import com.group1.quiz.dataTransferObject.quizDTO.QuizResponse;
@@ -44,7 +44,7 @@ public class QuizController {
     }
 
     @GetMapping("/findAll")
-    public ResponseEntity<?> getQuizzes(@RequestParam(required=false) String search, @RequestParam QuizOrderEnum orderBy, @RequestParam int page, @RequestParam RowLength size) {
+    public ResponseEntity<?> getQuizzes(@RequestParam(required=false) String search, @RequestParam QuizOrderEnum orderBy, @RequestParam int page, @RequestParam RowLengthEnum size) {
         QuizTableResponse quizzesResponses;
         try {
             quizzesResponses = quizService.getQuizzes(orderBy, page, size.getValue(), search);

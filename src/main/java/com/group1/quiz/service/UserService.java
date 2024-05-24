@@ -24,8 +24,8 @@ public class UserService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) {
         Optional<UserModel> userModel = userRepository.findUserByUsername(username);
-        String defaultUsername = "Parzival";
-        String defaultPassword = new BCryptPasswordEncoder().encode("123");
+        String defaultUsername = "string";
+        String defaultPassword = new BCryptPasswordEncoder().encode("string");
 
         if(userModel.isPresent()) {
             return org.springframework.security.core.userdetails.User.builder()
@@ -50,28 +50,40 @@ public class UserService implements UserDetailsService {
         UserModel userModel = new UserModel(userDto);
         String encodedPassword = new BCryptPasswordEncoder().encode(userModel.getPassword());
         userModel.setPassword(encodedPassword);
-        userRepository.save(userModel);
+        userRepository.insert(userModel);
     }
 
 
     public void updateUser(String id, UserDto userDto) throws Exception {
         Optional<UserModel> userModel = userRepository.findById(id);
         if(userModel.isPresent()) {
-            userRepository.save(
-                    UserModel.builder()
-                            .id(id)
-                            .username(userDto.getUsername())
-                            .password(new BCryptPasswordEncoder().encode(userDto.getPassword()))
-                            .role(userDto.getRole())
-                            .createdAt(Date.from(Instant.now()))
-                            .updatedAt(Date.from(Instant.now()))
-                            .build()
-            );
+            UserModel user = userMapping(id, userDto);
+            userRepository.save(user);
+        }
+        else {
+            throw new Exception("User not found");
         }
     }
 
+    private UserModel userMapping(String id, UserDto userDto) {
+        return UserModel.builder()
+                .id(id)
+                .username(userDto.getUsername())
+                .password(new BCryptPasswordEncoder().encode(userDto.getPassword()))
+                .role(userDto.getRole())
+                .createdAt(Date.from(Instant.now()))
+                .updatedAt(Date.from(Instant.now()))
+                .build() ;
+    }
+
     public void deleteUser(String id) throws Exception {
-        userRepository.deleteById(id);
+        Optional<UserModel> userModel = userRepository.findById(id);
+        if(userModel.isPresent()) {
+            userRepository.deleteById(id);
+        }
+        else {
+            throw new Exception("User not found");
+        }
     }
 
 }

@@ -39,7 +39,6 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class QuizService {
-    private static final Logger log = LoggerFactory.getLogger(QuizService.class);
     private final UserRepository userRepository;
     private final QuizRepository quizRepository;
     private final QuestionRepository questionRepository;
@@ -52,7 +51,7 @@ public class QuizService {
             List<QuizModel> quizModels = quizRepository.findByUserId(userModel.get().getId());
             List<QuizzesResponse> quizzesResponses = new ArrayList<>();
             for(QuizModel quizModel : quizModels) {
-                quizzesResponses.add(QuizResponseMapping(quizModel));
+                quizzesResponses.add(quizResponseMapping(quizModel));
             }
             return quizzesResponses;
         } else {
@@ -79,12 +78,12 @@ public class QuizService {
             count = quizRepository.countAllDocuments();
         }
         return QuizTableResponse.builder()
-                .quizzes(quizModels.stream().map(this::QuizResponseMapping).toList())
+                .quizzes(quizModels.stream().map(this::quizResponseMapping).toList())
                 .columns(count)
                 .build();
     }
 
-    private QuizzesResponse QuizResponseMapping(QuizModel quizModel) {
+    private QuizzesResponse quizResponseMapping(QuizModel quizModel) {
         return QuizzesResponse.builder()
                 .id(quizModel.getId())
                 .name(quizModel.getName())
@@ -174,7 +173,7 @@ public class QuizService {
                     AnswerModel answerModel = new AnswerModel();
                     answerModel.setAnswer(answerRequest.getAnswer());
                     answerModel.setQuestionId(questionModel.getId());
-                    answerModel.setCorrect(answerRequest.is_correct());
+                    answerModel.setCorrect(answerRequest.isCorrect());
                     answerModel.setCreatedAt(Date.from(Instant.now()));
                     answerModel.setUpdatedAt(Date.from(Instant.now()));
 
