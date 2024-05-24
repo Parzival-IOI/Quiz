@@ -20,26 +20,23 @@
 You can rename application.yml to application.properties, if you prefer .properties file
 + application.properties  
 
-
-    spring.application.name=quiz  
-    rsa.rsa-public-key=classpath:Certification/public.pem  
-    rsa.rsa-private-key=classpath:Certification/private.pem  
-    spring.data.mongodb.uri= <your mongodb atlas uri>  
-    spring.data.mongodb.database= <your database name>  
-
+        spring.application.name=quiz  
+        rsa.rsa-public-key=classpath:Certification/public.pem  
+        rsa.rsa-private-key=classpath:Certification/private.pem  
+        spring.data.mongodb.uri= <your mongodb atlas uri>  
+        spring.data.mongodb.database= <your database name>
 + application.yml
 
-
-    spring:  
-        application:  
-            name: quiz  
-        data:  
-            mongodb:  
-                uri: <your mongodb atlas uri>  
-                database: <your database name>  
-    rsa:  
-        rsa-public-key: classpath:Certification/public.pem  
-        rsa-private-key: classpath:Certification/private.pem  
+        spring:  
+            application:  
+                name: quiz  
+            data:  
+                mongodb:  
+                    uri: <your mongodb atlas uri>  
+                    database: <your database name>  
+        rsa:  
+            rsa-public-key: classpath:Certification/public.pem  
+            rsa-private-key: classpath:Certification/private.pem  
 
 
 > #### Note:
