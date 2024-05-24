@@ -1,13 +1,13 @@
 package com.group1.quiz.controller;
 
-import com.group1.quiz.dataTransferObject.UserDto;
-import com.group1.quiz.service.UserService;
+import com.group1.quiz.dataTransferObject.questionDTO.CreateQuestionRequest;
+import com.group1.quiz.dataTransferObject.questionDTO.UpdateQuestionRequest;
+import com.group1.quiz.service.QuestionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -16,28 +16,25 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/user")
+@RequestMapping("/api/question")
 @RequiredArgsConstructor
 @Slf4j
-public class UserController {
-    private final UserService userService;
-
+public class QuestionController {
+    private final QuestionService questionService;
     @PostMapping("/create")
-    public ResponseEntity<?> createUser(@RequestBody UserDto userDto) {
+    public ResponseEntity<?> createQuestion(@RequestBody CreateQuestionRequest createQuestionRequest) {
         try {
-            log.info("Create user: {}", userDto.getUsername());
-            userService.createUser(userDto);
+            questionService.createQuestion(createQuestionRequest);
         } catch (Exception e) {
             log.info(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return new ResponseEntity<>("success", HttpStatus.OK);
     }
-
     @PutMapping("/update/{id}")
-    public ResponseEntity<?> updateUser(@PathVariable String id, @RequestBody UserDto userDto) {
+    public ResponseEntity<?> updateQuestion(@PathVariable String id, @RequestBody UpdateQuestionRequest updateQuestionRequest) {
         try {
-            userService.updateUser(id, userDto);
+            questionService.updateQuestion(id, updateQuestionRequest);
         } catch (Exception e) {
             log.info(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -46,13 +43,14 @@ public class UserController {
     }
 
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<?> deleteUser(@PathVariable String id) {
+    public ResponseEntity<?> deleteQuestion(@PathVariable String id) {
         try {
-            userService.deleteUser(id);
-        } catch (Exception e) {
+            questionService.deleteQuestion(id);
+        } catch(Exception e) {
             log.info(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return new ResponseEntity<>("success", HttpStatus.OK);
     }
+
 }

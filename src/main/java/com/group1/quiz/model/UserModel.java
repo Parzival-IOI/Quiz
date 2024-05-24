@@ -1,6 +1,7 @@
 package com.group1.quiz.model;
 
 import com.group1.quiz.dataTransferObject.UserDto;
+import com.group1.quiz.enums.UserRoleEnum;
 import java.util.Date;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,7 +27,7 @@ public class UserModel {
     private String username;
     private String password;
     @Field(name="role")
-    private UserRole role;
+    private UserRoleEnum role;
     private Date createdAt;
     private Date updatedAt;
 
