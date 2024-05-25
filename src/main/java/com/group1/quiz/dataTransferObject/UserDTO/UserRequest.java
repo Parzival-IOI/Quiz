@@ -1,4 +1,4 @@
-package com.group1.quiz.dataTransferObject;
+package com.group1.quiz.dataTransferObject.UserDTO;
 
 import com.group1.quiz.enums.UserRoleEnum;
 import lombok.AllArgsConstructor;
@@ -10,8 +10,9 @@ import lombok.Setter;
 @AllArgsConstructor
 @Getter
 @Setter
-public class UserDto {
+public class UserRequest {
     private String username;
     private String password;
+    private String email;
     private UserRoleEnum role;
 }

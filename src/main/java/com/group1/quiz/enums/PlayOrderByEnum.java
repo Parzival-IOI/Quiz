@@ -3,12 +3,12 @@ package com.group1.quiz.enums;
 import lombok.Getter;
 
 @Getter
-public enum QuizOrderEnum {
-    ID("id"),
-    NAME("name");
+public enum PlayOrderByEnum {
+    NAME("name"),
+    DATE("createdAt");
 
     private final String value;
-    QuizOrderEnum(String value) {
+    PlayOrderByEnum(String value) {
         this.value = value;
     }
 }

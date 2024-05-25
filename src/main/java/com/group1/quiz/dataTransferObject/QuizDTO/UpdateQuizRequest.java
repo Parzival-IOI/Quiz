@@ -1,4 +1,4 @@
-package com.group1.quiz.dataTransferObject.quizDTO;
+package com.group1.quiz.dataTransferObject.QuizDTO;
 
 import com.group1.quiz.enums.QuizVisibilityEnum;
 import lombok.Builder;

@@ -1,8 +1,9 @@
 package com.group1.quiz.controller;
 
-import com.group1.quiz.dataTransferObject.answerDTO.CreateAnswerRequest;
-import com.group1.quiz.dataTransferObject.answerDTO.UpdateAnswerRequest;
+import com.group1.quiz.dataTransferObject.AnswerDTO.CreateAnswerRequest;
+import com.group1.quiz.dataTransferObject.AnswerDTO.UpdateAnswerRequest;
 import com.group1.quiz.service.AnswerService;
+import com.group1.quiz.util.ResponseStatusException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -26,6 +27,9 @@ public class AnswerController {
     public ResponseEntity<?> createAnswer(@RequestBody CreateAnswerRequest createAnswerRequest) {
         try {
             answerService.createAnswer(createAnswerRequest);
+        } catch (ResponseStatusException e) {
+            log.info(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), e.getCode());
         } catch (Exception e) {
             log.info(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -37,6 +41,9 @@ public class AnswerController {
     public ResponseEntity<?> updateAnswer(@PathVariable String id, @RequestBody UpdateAnswerRequest updateAnswerRequest) {
         try {
             answerService.updateAnswer(id, updateAnswerRequest);
+        } catch (ResponseStatusException e) {
+            log.info(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), e.getCode());
         } catch (Exception e) {
             log.info(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -48,6 +55,9 @@ public class AnswerController {
     public ResponseEntity<?> deleteAnswer(@PathVariable String id) {
         try {
             answerService.deleteAnswer(id);
+        } catch (ResponseStatusException e) {
+            log.info(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), e.getCode());
         } catch (Exception e) {
             log.info(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);

@@ -1,16 +1,17 @@
 package com.group1.quiz.service;
 
 
-import com.group1.quiz.dataTransferObject.answerDTO.AnswerRequest;
-import com.group1.quiz.dataTransferObject.answerDTO.AnswerResponse;
-import com.group1.quiz.dataTransferObject.questionDTO.QuestionResponse;
-import com.group1.quiz.dataTransferObject.quizDTO.CreateQuizRequest;
-import com.group1.quiz.dataTransferObject.questionDTO.QuestionRequest;
-import com.group1.quiz.dataTransferObject.quizDTO.UpdateQuizRequest;
-import com.group1.quiz.enums.QuizOrderEnum;
-import com.group1.quiz.dataTransferObject.quizDTO.QuizResponse;
-import com.group1.quiz.dataTransferObject.quizDTO.QuizTableResponse;
-import com.group1.quiz.dataTransferObject.quizDTO.QuizzesResponse;
+import com.group1.quiz.dataTransferObject.AnswerDTO.AnswerRequest;
+import com.group1.quiz.dataTransferObject.AnswerDTO.AnswerResponse;
+import com.group1.quiz.dataTransferObject.QuestionDTO.QuestionResponse;
+import com.group1.quiz.dataTransferObject.QuizDTO.CreateQuizRequest;
+import com.group1.quiz.dataTransferObject.QuestionDTO.QuestionRequest;
+import com.group1.quiz.dataTransferObject.QuizDTO.UpdateQuizRequest;
+import com.group1.quiz.enums.OrderEnum;
+import com.group1.quiz.enums.QuizOrderByEnum;
+import com.group1.quiz.dataTransferObject.QuizDTO.QuizResponse;
+import com.group1.quiz.dataTransferObject.TableResponse;
+import com.group1.quiz.dataTransferObject.QuizDTO.QuizzesResponse;
 import com.group1.quiz.model.AnswerModel;
 import com.group1.quiz.model.QuestionModel;
 import com.group1.quiz.model.QuizModel;
@@ -20,6 +21,8 @@ import com.group1.quiz.repository.AnswerRepository;
 import com.group1.quiz.repository.QuestionRepository;
 import com.group1.quiz.repository.QuizRepository;
 import com.group1.quiz.repository.UserRepository;
+import com.group1.quiz.util.ResponseStatusException;
+import com.group1.quiz.util.TableQueryBuilder;
 import java.security.Principal;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -28,13 +31,12 @@ import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -56,29 +58,22 @@ public class QuizService {
             }
             return quizzesResponses;
         } else {
-            return null;
+            throw new ResponseStatusException("No Quiz", HttpStatus.NO_CONTENT);
         }
     }
 
-    public QuizTableResponse getQuizzes(QuizOrderEnum orderBy, int page, int size, String search) throws Exception {
-        Query query = new Query();
+    public TableResponse<QuizzesResponse> getQuizzes(QuizOrderByEnum orderBy, OrderEnum order, int page, int size, String search) throws Exception {
         long count;
-        if(!StringUtils.isEmpty(search)) {
-            query.addCriteria(Criteria.where("name").is(search));
-        }
+        TableQueryBuilder tableQueryBuilder = new TableQueryBuilder(search, orderBy.getValue(), order, page, size);
 
-        query.with(Sort.by(Sort.Direction.ASC, orderBy.getValue()));
-
-        query.with(PageRequest.of(page, size));
-
-        List<QuizModel> quizModels = mongoTemplate.find(query, QuizModel.class);
+        List<QuizModel> quizModels = mongoTemplate.find(tableQueryBuilder.getQuery(), QuizModel.class);
 
         if (!StringUtils.isEmpty(search)) {
             count = quizModels.size();
         } else {
             count = quizRepository.countAllDocuments();
         }
-        return QuizTableResponse.builder()
+        return TableResponse.<QuizzesResponse>builder()
                 .quizzes(quizModels.stream().map(this::quizResponseMapping).toList())
                 .columns(count)
                 .build();
@@ -95,20 +90,31 @@ public class QuizService {
                 .build();
     }
 
-    public QuizResponse getQuizById(String id) throws Exception {
-        Optional<QuizModel> quizModel = quizRepository.findById(id);
-        if(quizModel.isPresent()) {
-            List<QuestionModel> questionModels = questionRepository.findByQuizId(quizModel.get().getId());
-            List<QuestionResponse> questionResponses = new ArrayList<>();
-            for(QuestionModel questionModel : questionModels) {
-                List<AnswerModel> answerModels = answerRepository.findByQuestionId(questionModel.getId());
-                List<AnswerResponse> answerResponses = answerModels.stream().map(this::answerResponseMapping).toList();
-                questionResponses.add(questionResponseMapping(questionModel, answerResponses));
+    public QuizResponse getQuizById(String id, Principal principal) throws Exception {
+        Optional<UserModel> userModel = userRepository.findUserByUsername(principal.getName());
+        if(userModel.isPresent()) {
+            Optional<QuizModel> quizModel = quizRepository.findById(id);
+            if(quizModel.isPresent()) {
+                if(quizModel.get().getUserId().equals(userModel.get().getId())) {
+                    List<QuestionModel> questionModels = questionRepository.findByQuizId(quizModel.get().getId());
+                    List<QuestionResponse> questionResponses = new ArrayList<>();
+                    for(QuestionModel questionModel : questionModels) {
+                        List<AnswerModel> answerModels = answerRepository.findByQuestionId(questionModel.getId());
+                        List<AnswerResponse> answerResponses = answerModels.stream().map(this::answerResponseMapping).toList();
+                        questionResponses.add(questionResponseMapping(questionModel, answerResponses));
+                    }
+                    return quizResponseMapping(quizModel.get(), questionResponses);
+                }
+                else {
+                    throw new ResponseStatusException("Permission Denied", HttpStatus.FORBIDDEN);
+                }
             }
-            return quizResponseMapping(quizModel.get(), questionResponses);
+            else {
+                throw new ResponseStatusException("Quiz Not Found", HttpStatus.NOT_FOUND);
+            }
         }
         else {
-            throw new Exception("Quiz Not Found");
+            throw new ResponseStatusException("Permission Denied", HttpStatus.FORBIDDEN);
         }
     }
 
@@ -183,7 +189,7 @@ public class QuizService {
             }
         }
         else {
-            throw new Exception("User not found");
+            throw new ResponseStatusException("User not found", HttpStatus.NOT_FOUND);
         }
 
     }
@@ -203,17 +209,16 @@ public class QuizService {
             quizRepository.save(quiz);
         }
         else {
-            throw new Exception("Quiz Not Found");
+            throw new ResponseStatusException("Quiz Not Found", HttpStatus.NOT_FOUND);
         }
     }
 
     public void deleteQuiz(String id) throws Exception {
-        Optional<QuizModel> quizModel = quizRepository.findById(id);
-        if(quizModel.isPresent()) {
-            quizRepository.deleteById(quizModel.get().getId());
+        if(quizRepository.existsById(id)) {
+            quizRepository.deleteById(id);
         }
         else {
-            throw new Exception("Quiz Not Found");
+            throw new ResponseStatusException("Quiz Not Found", HttpStatus.NOT_FOUND);
         }
     }
 }

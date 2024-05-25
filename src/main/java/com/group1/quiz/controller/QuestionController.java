@@ -1,8 +1,9 @@
 package com.group1.quiz.controller;
 
-import com.group1.quiz.dataTransferObject.questionDTO.CreateQuestionRequest;
-import com.group1.quiz.dataTransferObject.questionDTO.UpdateQuestionRequest;
+import com.group1.quiz.dataTransferObject.QuestionDTO.CreateQuestionRequest;
+import com.group1.quiz.dataTransferObject.QuestionDTO.UpdateQuestionRequest;
 import com.group1.quiz.service.QuestionService;
+import com.group1.quiz.util.ResponseStatusException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -25,6 +26,9 @@ public class QuestionController {
     public ResponseEntity<?> createQuestion(@RequestBody CreateQuestionRequest createQuestionRequest) {
         try {
             questionService.createQuestion(createQuestionRequest);
+        } catch (ResponseStatusException e) {
+            log.info(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), e.getCode());
         } catch (Exception e) {
             log.info(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -35,6 +39,9 @@ public class QuestionController {
     public ResponseEntity<?> updateQuestion(@PathVariable String id, @RequestBody UpdateQuestionRequest updateQuestionRequest) {
         try {
             questionService.updateQuestion(id, updateQuestionRequest);
+        } catch (ResponseStatusException e) {
+            log.info(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), e.getCode());
         } catch (Exception e) {
             log.info(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -46,6 +53,9 @@ public class QuestionController {
     public ResponseEntity<?> deleteQuestion(@PathVariable String id) {
         try {
             questionService.deleteQuestion(id);
+        } catch (ResponseStatusException e) {
+            log.info(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), e.getCode());
         } catch(Exception e) {
             log.info(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);

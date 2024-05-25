@@ -1,17 +1,17 @@
-package com.group1.quiz.dataTransferObject.answerDTO;
+package com.group1.quiz.dataTransferObject.PlayDTO;
 
 import java.util.Date;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
-@Setter
 @Getter
+@Setter
 @Builder
-public class AnswerResponse {
+public class PlaysResponse {
     private String id;
-    private String answer;
-    private boolean isCorrect;
+    private double score;
+    private String quizId;
     private Date createdAt;
     private Date updatedAt;
 }

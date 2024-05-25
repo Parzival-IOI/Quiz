@@ -1,13 +1,15 @@
 package com.group1.quiz.service;
 
-import com.group1.quiz.dataTransferObject.answerDTO.CreateAnswerRequest;
-import com.group1.quiz.dataTransferObject.answerDTO.UpdateAnswerRequest;
+import com.group1.quiz.dataTransferObject.AnswerDTO.CreateAnswerRequest;
+import com.group1.quiz.dataTransferObject.AnswerDTO.UpdateAnswerRequest;
 import com.group1.quiz.model.AnswerModel;
 import com.group1.quiz.repository.AnswerRepository;
+import com.group1.quiz.util.ResponseStatusException;
 import java.time.Instant;
 import java.util.Date;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -40,17 +42,16 @@ public class AnswerService {
             answerRepository.save(answer);
         }
         else {
-            throw new Exception("Answer not found");
+            throw new ResponseStatusException("Answer not found", HttpStatus.NOT_FOUND);
         }
     }
 
     public void deleteAnswer(String id) throws Exception {
-        Optional<AnswerModel> answerModel = answerRepository.findById(id);
-        if (answerModel.isPresent()) {
+        if (answerRepository.existsById(id)) {
             answerRepository.deleteById(id);
         }
         else {
-            throw new Exception("Answer not found");
+            throw new ResponseStatusException("Answer not found", HttpStatus.NOT_FOUND);
         }
     }
 }

@@ -1,6 +1,6 @@
-package com.group1.quiz.dataTransferObject.quizDTO;
+package com.group1.quiz.dataTransferObject.QuizDTO;
 
-import com.group1.quiz.dataTransferObject.questionDTO.QuestionResponse;
+import com.group1.quiz.dataTransferObject.QuestionDTO.QuestionResponse;
 import com.group1.quiz.enums.QuizVisibilityEnum;
 import java.util.Date;
 import java.util.List;
