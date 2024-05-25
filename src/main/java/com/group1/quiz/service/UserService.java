@@ -1,17 +1,30 @@
 package com.group1.quiz.service;
 
-import com.group1.quiz.dataTransferObject.UserDto;
+import com.group1.quiz.dataTransferObject.PlayDTO.PlaysResponse;
+import com.group1.quiz.dataTransferObject.QuizDTO.QuizzesResponse;
+import com.group1.quiz.dataTransferObject.TableResponse;
+import com.group1.quiz.dataTransferObject.UserDTO.UserRequest;
+import com.group1.quiz.dataTransferObject.UserDTO.UserResponse;
+import com.group1.quiz.enums.OrderEnum;
+import com.group1.quiz.enums.QuizOrderByEnum;
+import com.group1.quiz.enums.UserOrderByEnum;
 import com.group1.quiz.enums.UserRoleEnum;
+import com.group1.quiz.model.PlayModel;
 import com.group1.quiz.model.UserModel;
 import com.group1.quiz.repository.UserRepository;
 import com.group1.quiz.util.ResponseStatusException;
+import com.group1.quiz.util.TableQueryBuilder;
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -22,6 +35,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
+    private final MongoTemplate mongoTemplate;
 
     @Override
     public UserDetails loadUserByUsername(String username) {
@@ -45,21 +59,23 @@ public class UserService implements UserDetailsService {
         }
         return null;
     }
-    public void createUser(UserDto userDto) throws Exception {
+    public void createUser(UserRequest userDto) throws Exception {
         if(userRepository.findUserByUsername(userDto.getUsername()).isPresent()) {
             throw new ResponseStatusException("Username already exists", HttpStatus.BAD_REQUEST);
         }
         UserModel userModel = new UserModel(userDto);
         String encodedPassword = new BCryptPasswordEncoder().encode(userModel.getPassword());
         userModel.setPassword(encodedPassword);
+        userModel.setCreatedAt(Date.from(Instant.now()));
+        userModel.setUpdatedAt(Date.from(Instant.now()));
         userRepository.insert(userModel);
     }
 
 
-    public void updateUser(String id, UserDto userDto) throws ResponseStatusException {
+    public void updateUser(String id, UserRequest userDto) throws ResponseStatusException {
         Optional<UserModel> userModel = userRepository.findById(id);
         if(userModel.isPresent()) {
-            UserModel user = userMapping(id, userDto);
+            UserModel user = userMapping(userModel.get(), userDto);
             userRepository.save(user);
         }
         else {
@@ -67,13 +83,14 @@ public class UserService implements UserDetailsService {
         }
     }
 
-    private UserModel userMapping(String id, UserDto userDto) {
+    private UserModel userMapping(UserModel userModel, UserRequest userDto) {
         return UserModel.builder()
-                .id(id)
+                .id(userModel.getId())
                 .username(userDto.getUsername())
                 .password(new BCryptPasswordEncoder().encode(userDto.getPassword()))
+                .email(userDto.getEmail())
                 .role(userDto.getRole())
-                .createdAt(Date.from(Instant.now()))
+                .createdAt(userModel.getCreatedAt())
                 .updatedAt(Date.from(Instant.now()))
                 .build() ;
     }
@@ -87,4 +104,46 @@ public class UserService implements UserDetailsService {
         }
     }
 
+    public TableResponse<UserResponse> getUsers(UserOrderByEnum orderBy, OrderEnum order, int page, int size, String search) throws Exception {
+        long count;
+        TableQueryBuilder tableQueryBuilder = new TableQueryBuilder(search, orderBy.getValue(), order, page, size);
+
+        List<UserModel> userModels = mongoTemplate.find(tableQueryBuilder.getQuery(), UserModel.class);
+
+        if (!StringUtils.isEmpty(search)) {
+            count = userModels.size();
+        } else {
+            count = userRepository.countAllDocuments();
+        }
+        return TableResponse.<UserResponse>builder()
+                .quizzes(userModels.stream().map(this::userResponseMapping).toList())
+                .columns(count)
+                .build();
+    }
+
+    private UserResponse userResponseMapping(UserModel userModel) {
+        return UserResponse.builder()
+                .name(userModel.getUsername())
+                .email(userModel.getEmail())
+                .role(userModel.getRole())
+                .createdAt(userModel.getCreatedAt())
+                .updatedAt(userModel.getUpdatedAt())
+                .build();
+    }
+
+    public UserResponse findOne(String id) throws Exception {
+        Optional<UserModel> userModel = userRepository.findById(id);
+        if(userModel.isPresent()) {
+            return UserResponse.builder()
+                    .name(userModel.get().getUsername())
+                    .email(userModel.get().getEmail())
+                    .role(userModel.get().getRole())
+                    .createdAt(userModel.get().getCreatedAt())
+                    .updatedAt(userModel.get().getUpdatedAt())
+                    .build();
+        }
+        else {
+            throw new ResponseStatusException("User not found", HttpStatus.NOT_FOUND);
+        }
+    }
 }

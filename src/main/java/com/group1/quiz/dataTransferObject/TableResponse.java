@@ -1,4 +1,4 @@
-package com.group1.quiz.dataTransferObject.QuizDTO;
+package com.group1.quiz.dataTransferObject;
 
 import java.util.List;
 import lombok.Builder;
@@ -8,7 +8,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Builder
-public class QuizTableResponse {
-    private List<QuizzesResponse> quizzes;
+public class TableResponse<T> {
+    private List<T> quizzes;
     private long columns;
 }

@@ -7,9 +7,10 @@ import com.group1.quiz.dataTransferObject.QuestionDTO.QuestionResponse;
 import com.group1.quiz.dataTransferObject.QuizDTO.CreateQuizRequest;
 import com.group1.quiz.dataTransferObject.QuestionDTO.QuestionRequest;
 import com.group1.quiz.dataTransferObject.QuizDTO.UpdateQuizRequest;
-import com.group1.quiz.enums.QuizOrderEnum;
+import com.group1.quiz.enums.OrderEnum;
+import com.group1.quiz.enums.QuizOrderByEnum;
 import com.group1.quiz.dataTransferObject.QuizDTO.QuizResponse;
-import com.group1.quiz.dataTransferObject.QuizDTO.QuizTableResponse;
+import com.group1.quiz.dataTransferObject.TableResponse;
 import com.group1.quiz.dataTransferObject.QuizDTO.QuizzesResponse;
 import com.group1.quiz.model.AnswerModel;
 import com.group1.quiz.model.QuestionModel;
@@ -21,6 +22,7 @@ import com.group1.quiz.repository.QuestionRepository;
 import com.group1.quiz.repository.QuizRepository;
 import com.group1.quiz.repository.UserRepository;
 import com.group1.quiz.util.ResponseStatusException;
+import com.group1.quiz.util.TableQueryBuilder;
 import java.security.Principal;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -60,23 +62,18 @@ public class QuizService {
         }
     }
 
-    public QuizTableResponse getQuizzes(QuizOrderEnum orderBy, int page, int size, String search) throws Exception {
-        Query query = new Query();
+    public TableResponse<QuizzesResponse> getQuizzes(QuizOrderByEnum orderBy, OrderEnum order, int page, int size, String search) throws Exception {
         long count;
-        if(!StringUtils.isEmpty(search)) {
-            query.addCriteria(Criteria.where("name").is(search));
-        }
+        TableQueryBuilder tableQueryBuilder = new TableQueryBuilder(search, orderBy.getValue(), order, page, size);
 
-        query.with(Sort.by(Sort.Direction.ASC, orderBy.getValue()));
-        query.with(PageRequest.of(page, size));
-        List<QuizModel> quizModels = mongoTemplate.find(query, QuizModel.class);
+        List<QuizModel> quizModels = mongoTemplate.find(tableQueryBuilder.getQuery(), QuizModel.class);
 
         if (!StringUtils.isEmpty(search)) {
             count = quizModels.size();
         } else {
             count = quizRepository.countAllDocuments();
         }
-        return QuizTableResponse.builder()
+        return TableResponse.<QuizzesResponse>builder()
                 .quizzes(quizModels.stream().map(this::quizResponseMapping).toList())
                 .columns(count)
                 .build();

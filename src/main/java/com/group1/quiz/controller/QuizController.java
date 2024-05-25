@@ -1,11 +1,12 @@
 package com.group1.quiz.controller;
 
 import com.group1.quiz.dataTransferObject.QuizDTO.UpdateQuizRequest;
+import com.group1.quiz.enums.OrderEnum;
 import com.group1.quiz.enums.RowLengthEnum;
 import com.group1.quiz.dataTransferObject.QuizDTO.CreateQuizRequest;
-import com.group1.quiz.enums.QuizOrderEnum;
+import com.group1.quiz.enums.QuizOrderByEnum;
 import com.group1.quiz.dataTransferObject.QuizDTO.QuizResponse;
-import com.group1.quiz.dataTransferObject.QuizDTO.QuizTableResponse;
+import com.group1.quiz.dataTransferObject.TableResponse;
 import com.group1.quiz.dataTransferObject.QuizDTO.QuizzesResponse;
 import com.group1.quiz.service.QuizService;
 import com.group1.quiz.util.ResponseStatusException;
@@ -51,10 +52,10 @@ public class QuizController {
     }
 
     @GetMapping("/findAll")
-    public ResponseEntity<?> getQuizzes(@RequestParam(required=false) String search, @RequestParam QuizOrderEnum orderBy, @RequestParam int page, @RequestParam RowLengthEnum size) {
-        QuizTableResponse quizzesResponses;
+    public ResponseEntity<?> getQuizzes(@RequestParam(required=false) String search, @RequestParam QuizOrderByEnum orderBy, @RequestParam OrderEnum order, @RequestParam int page, @RequestParam RowLengthEnum size) {
+        TableResponse<QuizzesResponse> tableResponse;
         try {
-            quizzesResponses = quizService.getQuizzes(orderBy, page, size.getValue(), search);
+            tableResponse = quizService.getQuizzes(orderBy, order, page, size.getValue(), search);
         } catch (ResponseStatusException e) {
             log.info(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), e.getCode());
@@ -62,7 +63,7 @@ public class QuizController {
             log.info(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity<>(quizzesResponses, HttpStatus.OK);
+        return new ResponseEntity<>(tableResponse, HttpStatus.OK);
     }
 
     @GetMapping("/find/{id}")
