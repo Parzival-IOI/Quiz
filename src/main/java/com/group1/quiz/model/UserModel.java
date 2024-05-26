@@ -26,6 +26,7 @@ public class UserModel {
     @Indexed(unique = true)
     private String username;
     private String password;
+    @Indexed(unique = true)
     private String email;
     @Field(name="role")
     private UserRoleEnum role;
