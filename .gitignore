@@ -32,5 +32,5 @@ build/
 .vscode/
 
 ### secret file ###
-**.pem
+src/main/resources/Certification/**.pem
 .env
