@@ -3,6 +3,6 @@ COPY . .
 RUN mvn clean package -DskipTests
 
 FROM openjdk:17.0.1-jdk-slim
-COPY --from=build /target/Parzival-0.0.1-SNAPSHOT.jar Parzival.jar
+COPY --from=build /target/quiz-0.0.1-SNAPSHOT.jar quiz.jar
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar","Parzival.jar"]
+ENTRYPOINT ["java", "-jar","quiz.jar"]
