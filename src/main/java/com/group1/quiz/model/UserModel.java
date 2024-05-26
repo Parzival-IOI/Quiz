@@ -2,6 +2,8 @@ package com.group1.quiz.model;
 
 import com.group1.quiz.dataTransferObject.UserDTO.UserRequest;
 import com.group1.quiz.enums.UserRoleEnum;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Pattern;
 import java.util.Date;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,6 +28,7 @@ public class UserModel {
     @Indexed(unique = true)
     private String username;
     private String password;
+    @Email(regexp = "[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,3}", flags = Pattern.Flag.CASE_INSENSITIVE)
     @Indexed(unique = true)
     private String email;
     @Field(name="role")
