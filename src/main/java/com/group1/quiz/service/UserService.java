@@ -15,6 +15,7 @@ import com.group1.quiz.model.UserModel;
 import com.group1.quiz.repository.UserRepository;
 import com.group1.quiz.util.ResponseStatusException;
 import com.group1.quiz.util.TableQueryBuilder;
+import java.security.Principal;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
@@ -172,5 +173,15 @@ public class UserService implements UserDetailsService {
                 .build();
 
         userRepository.save(user);
+    }
+
+    public String getRole(Principal principal) throws Exception {
+        Optional<UserModel> userModel = userRepository.findUserByUsername(principal.getName());
+        log.info(principal.getName());
+        if(userModel.isPresent()) {
+            return userModel.get().getRole().getValue();
+        } else {
+            throw new ResponseStatusException("User not found", HttpStatus.NOT_FOUND);
+        }
     }
 }
