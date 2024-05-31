@@ -1,11 +1,13 @@
 package com.group1.quiz.util;
 import com.group1.quiz.enums.OrderEnum;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 
+@Slf4j
 public class TableQueryBuilder {
     private final String search;
     private final String orderBy;
@@ -24,8 +26,9 @@ public class TableQueryBuilder {
     public Query getQuery(){
         Query query = new Query();
         if(!StringUtils.isEmpty(search)) {
-            query.addCriteria(Criteria.where("name").is(search));
+            query.addCriteria(Criteria.where("name").regex(".*"+search+".*", "i"));
         }
+        log.info(this.search);
         if(order.equals(OrderEnum.DESC)) {
             query.with(Sort.by(Sort.Direction.DESC, orderBy));
         } else if(order.equals(OrderEnum.ASC)) {

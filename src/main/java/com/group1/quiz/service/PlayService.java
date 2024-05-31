@@ -208,10 +208,14 @@ public class PlayService {
 
     public TableResponse<PlaysResponse> getPlays(PlayOrderByEnum orderBy, OrderEnum order, int page, int size, String search, Principal principal) throws Exception {
         long count;
+        Optional<UserModel> userModel = userRepository.findUserByUsername(principal.getName());
+        if(userModel.isEmpty()) {
+            throw new ResponseStatusException("Permission Denied", HttpStatus.FORBIDDEN);
+        }
         Query query = new Query();
-        query.addCriteria(Criteria.where("userId").is(principal.getName()));
+        query.addCriteria(Criteria.where("userId").is(userModel.get().getId()));
         if(!StringUtils.isEmpty(search)) {
-            query.addCriteria(Criteria.where("name").is(search));
+            query.addCriteria(Criteria.where("name").regex(".*"+search+".*", "i"));
         }
         if(order.equals(OrderEnum.DESC)) {
             query.with(Sort.by(Sort.Direction.DESC, orderBy.getValue()));

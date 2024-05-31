@@ -3,6 +3,7 @@ package com.group1.quiz.service;
 import com.group1.quiz.dataTransferObject.PlayDTO.PlaysResponse;
 import com.group1.quiz.dataTransferObject.QuizDTO.QuizzesResponse;
 import com.group1.quiz.dataTransferObject.TableResponse;
+import com.group1.quiz.dataTransferObject.UserDTO.UserRegisterRequest;
 import com.group1.quiz.dataTransferObject.UserDTO.UserRequest;
 import com.group1.quiz.dataTransferObject.UserDTO.UserResponse;
 import com.group1.quiz.enums.OrderEnum;
@@ -14,6 +15,7 @@ import com.group1.quiz.model.UserModel;
 import com.group1.quiz.repository.UserRepository;
 import com.group1.quiz.util.ResponseStatusException;
 import com.group1.quiz.util.TableQueryBuilder;
+import java.security.Principal;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
@@ -143,6 +145,42 @@ public class UserService implements UserDetailsService {
                     .build();
         }
         else {
+            throw new ResponseStatusException("User not found", HttpStatus.NOT_FOUND);
+        }
+    }
+
+    public void registerUser(UserRegisterRequest userRegisterRequest) throws Exception {
+        if(userRepository.existsByUsername(userRegisterRequest.getUsername()) || userRepository.existsByEmail(userRegisterRequest.getEmail())) {
+            throw new ResponseStatusException("Username/Email already exists", HttpStatus.BAD_REQUEST);
+        }
+
+        UserRoleEnum role;
+        if(Objects.equals(userRegisterRequest.getRole().getValue(), UserRoleEnum.TEACHER.getValue())) {
+            role = UserRoleEnum.TEACHER;
+        } else if(Objects.equals(userRegisterRequest.getRole().getValue(), UserRoleEnum.STUDENT.getValue())) {
+            role = UserRoleEnum.STUDENT;
+        } else {
+            role = UserRoleEnum.STUDENT;
+        }
+
+        UserModel user = UserModel.builder()
+                .username(userRegisterRequest.getUsername())
+                .password(new BCryptPasswordEncoder().encode(userRegisterRequest.getPassword()))
+                .email(userRegisterRequest.getEmail())
+                .role(role)
+                .createdAt(Date.from(Instant.now()))
+                .updatedAt(Date.from(Instant.now()))
+                .build();
+
+        userRepository.save(user);
+    }
+
+    public String getRole(Principal principal) throws Exception {
+        Optional<UserModel> userModel = userRepository.findUserByUsername(principal.getName());
+        log.info(principal.getName());
+        if(userModel.isPresent()) {
+            return userModel.get().getRole().getValue();
+        } else {
             throw new ResponseStatusException("User not found", HttpStatus.NOT_FOUND);
         }
     }
