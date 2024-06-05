@@ -31,11 +31,7 @@ import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -74,7 +70,7 @@ public class QuizService {
             count = quizRepository.countAllDocuments();
         }
         return TableResponse.<QuizzesResponse>builder()
-                .quizzes(quizModels.stream().map(this::quizResponseMapping).toList())
+                .data(quizModels.stream().map(this::quizResponseMapping).toList())
                 .columns(count)
                 .build();
     }

@@ -9,6 +9,6 @@ import lombok.Setter;
 @Setter
 @Builder
 public class TableResponse<T> {
-    private List<T> quizzes;
+    private List<T> data;
     private long columns;
 }
