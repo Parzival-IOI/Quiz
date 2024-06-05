@@ -1,16 +1,12 @@
 package com.group1.quiz.service;
 
-import com.group1.quiz.dataTransferObject.PlayDTO.PlaysResponse;
-import com.group1.quiz.dataTransferObject.QuizDTO.QuizzesResponse;
 import com.group1.quiz.dataTransferObject.TableResponse;
 import com.group1.quiz.dataTransferObject.UserDTO.UserRegisterRequest;
 import com.group1.quiz.dataTransferObject.UserDTO.UserRequest;
 import com.group1.quiz.dataTransferObject.UserDTO.UserResponse;
 import com.group1.quiz.enums.OrderEnum;
-import com.group1.quiz.enums.QuizOrderByEnum;
 import com.group1.quiz.enums.UserOrderByEnum;
 import com.group1.quiz.enums.UserRoleEnum;
-import com.group1.quiz.model.PlayModel;
 import com.group1.quiz.model.UserModel;
 import com.group1.quiz.repository.UserRepository;
 import com.group1.quiz.util.ResponseStatusException;
@@ -26,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -42,24 +37,12 @@ public class UserService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) {
         Optional<UserModel> userModel = userRepository.findUserByUsername(username);
-        String defaultUsername = "string";
-        String defaultPassword = new BCryptPasswordEncoder().encode("string");
 
-        if(userModel.isPresent()) {
-            return org.springframework.security.core.userdetails.User.builder()
-                    .username(userModel.get().getUsername())
-                    .password(userModel.get().getPassword())
-                    .roles(userModel.get().getRole().getValue())
-                    .build();
-        }
-        else if(Objects.equals(username, defaultUsername)) {
-            return org.springframework.security.core.userdetails.User.builder()
-                    .username(defaultUsername)
-                    .password(defaultPassword)
-                    .roles(UserRoleEnum.ADMIN.getValue())
-                    .build();
-        }
-        return null;
+        return userModel.map(model -> org.springframework.security.core.userdetails.User.builder()
+                .username(model.getUsername())
+                .password(model.getPassword())
+                .roles(model.getRole().getValue())
+                .build()).orElse(null);
     }
     public void createUser(UserRequest userDto) throws Exception {
         if(userRepository.findUserByUsername(userDto.getUsername()).isPresent()) {
@@ -118,7 +101,7 @@ public class UserService implements UserDetailsService {
             count = userRepository.countAllDocuments();
         }
         return TableResponse.<UserResponse>builder()
-                .quizzes(userModels.stream().map(this::userResponseMapping).toList())
+                .data(userModels.stream().map(this::userResponseMapping).toList())
                 .columns(count)
                 .build();
     }

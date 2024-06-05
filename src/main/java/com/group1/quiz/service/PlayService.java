@@ -7,11 +7,9 @@ import com.group1.quiz.dataTransferObject.PlayDTO.PlayQuizRequest;
 import com.group1.quiz.dataTransferObject.PlayDTO.PlayQuizResponse;
 import com.group1.quiz.dataTransferObject.PlayDTO.PlayResponse;
 import com.group1.quiz.dataTransferObject.PlayDTO.PlaysResponse;
-import com.group1.quiz.dataTransferObject.QuizDTO.QuizzesResponse;
 import com.group1.quiz.dataTransferObject.TableResponse;
 import com.group1.quiz.enums.OrderEnum;
 import com.group1.quiz.enums.PlayOrderByEnum;
-import com.group1.quiz.enums.QuizOrderByEnum;
 import com.group1.quiz.enums.QuizVisibilityEnum;
 import com.group1.quiz.enums.UserRoleEnum;
 import com.group1.quiz.model.AnswerModel;
@@ -191,7 +189,7 @@ public class PlayService {
             count = playRepository.countAllDocuments();
         }
         return TableResponse.<PlaysResponse>builder()
-                .quizzes(playModels.stream().map(this::playsResponseMapping).toList())
+                .data(playModels.stream().map(this::playsResponseMapping).toList())
                 .columns(count)
                 .build();
     }
@@ -232,7 +230,7 @@ public class PlayService {
             count = playRepository.countAllDocuments();
         }
         return TableResponse.<PlaysResponse>builder()
-                .quizzes(playModels.stream().map(this::playsResponseMapping).toList())
+                .data(playModels.stream().map(this::playsResponseMapping).toList())
                 .columns(count)
                 .build();
     }
