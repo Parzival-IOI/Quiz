@@ -93,14 +93,14 @@
 > + Response:
 >   + {
 >     + "data": [
->         +  {
->           +  "id": "39434592bc04a345345",
->           +  "name": "Testing",
->           +  "description": "Just Testing",
->           +  "visibility": "PUBLIC",
->           +  "createdAt": "2024-05-28T15:03:59.718+00:00",
->           +  "updatedAt": "2024-05-28T15:03:59.718+00:00"
->         +   },
+>       +  {
+>         +  "id": "39434592bc04a345345",
+>         +  "name": "Testing",
+>         +  "description": "Just Testing",
+>         +  "visibility": "PUBLIC",
+>         +  "createdAt": "2024-05-28T15:03:59.718+00:00",
+>         +  "updatedAt": "2024-05-28T15:03:59.718+00:00"
+>       +   },
 >     + ],
 >     + "columns": 10
 >   + }

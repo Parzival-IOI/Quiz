@@ -1,12 +1,25 @@
 package com.group1.quiz.service;
 
+import com.group1.quiz.dataTransferObject.AuthResponse;
+import com.group1.quiz.dataTransferObject.LoginRequest;
+import com.group1.quiz.model.LoginModel;
+import com.group1.quiz.model.UserModel;
+import com.group1.quiz.repository.LoginRepository;
+import com.group1.quiz.repository.UserRepository;
+import com.group1.quiz.util.ResponseStatusException;
+import java.security.Principal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
@@ -17,22 +30,108 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class TokenService {
     private final JwtEncoder jwtEncoder;
-    public String generateToken(Authentication authentication) {
+    private final AuthenticationManager authenticationManager;
+    private final UserRepository userRepository;
+    private final LoginRepository loginRepository;
+
+    public AuthResponse generateToken(LoginRequest loginRequest) throws Exception {
+        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.username(), loginRequest.password()));
         Instant now = Instant.now();
         String role = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(" "));
-        JwtClaimsSet claimsSet = JwtClaimsSet.builder()
+        //access token
+        JwtClaimsSet accessToken = JwtClaimsSet.builder()
+                .issuer("self")
+                .issuedAt(now)
+                .expiresAt(now.plusSeconds(15))
+                .subject(authentication.getName())
+                .claim("role", role)
+                .build();
+
+        //refresh token
+        JwtClaimsSet refreshToken = JwtClaimsSet.builder()
                 .issuer("self")
                 .issuedAt(now)
                 .expiresAt(now.plus(1, ChronoUnit.HOURS))
                 .subject(authentication.getName())
-                .claim("role", role)
+                .claim("role", "ROLE_REFRESH_TOKEN")
+                .claim("token", "refresh")
                 .build();
-        String generatedToken = this.jwtEncoder.encode(JwtEncoderParameters.from(claimsSet)).getTokenValue();
-        String createdToken = "Login : " + authentication.getName() + "/" + role + "/" + generatedToken;
+
+        String generatedAccessToken = this.jwtEncoder.encode(JwtEncoderParameters.from(accessToken)).getTokenValue();
+        String generatedRefreshToken = this.jwtEncoder.encode(JwtEncoderParameters.from(refreshToken)).getTokenValue();
+
+        String createdToken = "Login : " + authentication.getName() + "/" + role + "/" + generatedAccessToken;
         log.info(createdToken);
-        return generatedToken;
+
+        Optional<LoginModel> loginModel = loginRepository.findByUserName(authentication.getName());
+        if(loginModel.isPresent()) {
+            loginModel.get().setRefreshToken(generatedRefreshToken);
+            loginRepository.save(loginModel.get());
+        } else {
+            loginRepository.insert(
+                    LoginModel.builder()
+                            .userName(authentication.getName())
+                            .refreshToken(generatedRefreshToken)
+                            .build()
+            );
+        }
+
+        return AuthResponse.builder()
+                .accessToken(generatedAccessToken)
+                .refreshToken(generatedRefreshToken)
+                .build();
     }
 
+    public AuthResponse generateRefreshToken(Principal principal, Jwt jwt) throws Exception {
+        Optional<UserModel> userModel = userRepository.findUserByUsername(principal.getName());
+        if(userModel.isPresent()) {
+
+            Optional<LoginModel> loginModel = loginRepository.findByUserName(userModel.get().getUsername());
+            if(loginModel.isPresent()) {
+                if(!loginModel.get().getRefreshToken().equals(jwt.getTokenValue())) {
+                    throw new ResponseStatusException("invalid", HttpStatus.BAD_REQUEST);
+                }
+            }
+
+            Instant now = Instant.now();
+            String role = userModel.get().getRole().getValue();
+            //access token
+            JwtClaimsSet accessToken = JwtClaimsSet.builder()
+                    .issuer("self")
+                    .issuedAt(now)
+                    .expiresAt(now.plusSeconds(15))
+                    .subject(userModel.get().getUsername())
+                    .claim("role", role)
+                    .build();
+
+            //refresh token
+            JwtClaimsSet refreshToken = JwtClaimsSet.builder()
+                    .issuer("self")
+                    .issuedAt(now)
+                    .expiresAt(now.plus(1, ChronoUnit.HOURS))
+                    .subject(userModel.get().getUsername())
+                    .claim("role", "ROLE_REFRESH_TOKEN")
+                    .claim("token", "refresh")
+                    .build();
+
+            String generatedAccessToken = this.jwtEncoder.encode(JwtEncoderParameters.from(accessToken)).getTokenValue();
+            String generatedRefreshToken = this.jwtEncoder.encode(JwtEncoderParameters.from(refreshToken)).getTokenValue();
+
+            if(loginModel.isPresent()) {
+                loginModel.get().setRefreshToken(generatedRefreshToken);
+                loginRepository.save(loginModel.get());
+            }
+
+            String createdToken = "refresh : " + userModel.get().getUsername() + "/" + role + "/" + generatedAccessToken;
+            log.info(createdToken);
+
+            return AuthResponse.builder()
+                    .accessToken(generatedAccessToken)
+                    .refreshToken(generatedRefreshToken)
+                    .build();
+        }
+        throw new ResponseStatusException("Invalid", HttpStatus.BAD_REQUEST);
+    }
 }

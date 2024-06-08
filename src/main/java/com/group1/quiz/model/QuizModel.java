@@ -17,8 +17,6 @@ import org.springframework.data.mongodb.core.mapping.Field;
 @Builder
 @Data
 public class QuizModel {
-    @Transient
-    public static final String SEQUENCE_NAME = "projects_sequence";
     @Id
     private String id;
     private String name;

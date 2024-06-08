@@ -9,14 +9,6 @@ import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
-import java.security.KeyFactory;
-import java.security.PrivateKey;
-import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.security.spec.X509EncodedKeySpec;
-import java.util.Arrays;
-import java.util.Base64;
 import java.util.Collection;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
@@ -75,6 +67,7 @@ public class SecurityConfig {
                         .requestMatchers("/auth", "/register").permitAll()
                         .requestMatchers("/migrate").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/refreshToken").hasRole("REFRESH_TOKEN")
                         .requestMatchers("/api/user/**").hasRole(UserRoleEnum.ADMIN.getValue())
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session
@@ -103,30 +96,14 @@ public class SecurityConfig {
 
     @Bean
     JwtDecoder jwtDecoder() throws Exception {
-        return NimbusJwtDecoder.withPublicKey(this.loadPublicKey(rsaKeyProperties.rsaPublicKey())).build();
+        return NimbusJwtDecoder.withPublicKey(rsaKeyProperties.getRSAPublickey()).build();
     }
 
     @Bean
     JwtEncoder jwtEncoder() throws Exception {
-        JWK jwk = new RSAKey.Builder(this.loadPublicKey(rsaKeyProperties.rsaPublicKey())).privateKey(this.loadPrivateKey(rsaKeyProperties.rsaPrivateKey())).build();
+        JWK jwk = new RSAKey.Builder(rsaKeyProperties.getRSAPublickey()).privateKey(rsaKeyProperties.getRSAPrivatekey()).build();
         JWKSource<SecurityContext> jwkSource = new ImmutableJWKSet<>(new JWKSet(jwk));
         return new NimbusJwtEncoder(jwkSource);
-    }
-
-    public RSAPublicKey loadPublicKey(String stored) throws Exception {
-        byte[] data = Base64.getDecoder().decode((stored.getBytes()));
-        X509EncodedKeySpec spec = new X509EncodedKeySpec(data);
-        KeyFactory fact = KeyFactory.getInstance("RSA");
-        return (RSAPublicKey) fact.generatePublic(spec);
-    }
-
-    public RSAPrivateKey loadPrivateKey(String key64) throws Exception {
-        byte[] clear = Base64.getDecoder().decode(key64.getBytes());
-        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(clear);
-        KeyFactory fact = KeyFactory.getInstance("RSA");
-        PrivateKey privateKey = fact.generatePrivate(keySpec);
-        Arrays.fill(clear, (byte) 0);
-        return (RSAPrivateKey) privateKey;
     }
 
 }
