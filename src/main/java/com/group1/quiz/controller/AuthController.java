@@ -46,7 +46,7 @@ public class AuthController {
         return new ResponseEntity<>(authResponse, HttpStatus.OK);
     }
 
-    @GetMapping("/refreshToken")
+    @PostMapping("/refreshToken")
     public ResponseEntity<?> refreshToken(Principal principal, @AuthenticationPrincipal Jwt jwt) {
         log.info(principal.getName());
         AuthResponse authResponse;
