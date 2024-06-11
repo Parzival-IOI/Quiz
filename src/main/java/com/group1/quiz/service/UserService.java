@@ -24,6 +24,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -35,14 +36,17 @@ public class UserService implements UserDetailsService {
     private final MongoTemplate mongoTemplate;
 
     @Override
-    public UserDetails loadUserByUsername(String username) {
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Optional<UserModel> userModel = userRepository.findUserByUsername(username);
 
-        return userModel.map(model -> org.springframework.security.core.userdetails.User.builder()
-                .username(model.getUsername())
-                .password(model.getPassword())
-                .roles(model.getRole().getValue())
-                .build()).orElse(null);
+        if(userModel.isPresent()) {
+            return org.springframework.security.core.userdetails.User.builder()
+                    .username(userModel.get().getUsername())
+                    .password(userModel.get().getPassword())
+                    .roles(userModel.get().getRole().getValue())
+                    .build();
+        }
+        throw new RuntimeException("User Not Found");
     }
     public void createUser(UserRequest userDto) throws Exception {
         if(userRepository.findUserByUsername(userDto.getUsername()).isPresent()) {

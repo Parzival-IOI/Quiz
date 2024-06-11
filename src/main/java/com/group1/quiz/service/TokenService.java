@@ -34,7 +34,7 @@ public class TokenService {
     private final UserRepository userRepository;
     private final LoginRepository loginRepository;
 
-    public AuthResponse generateToken(LoginRequest loginRequest) throws Exception {
+    public AuthResponse generateToken(LoginRequest loginRequest) throws  Exception {
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.username(), loginRequest.password()));
         Instant now = Instant.now();
         String role = authentication.getAuthorities().stream()
@@ -103,7 +103,7 @@ public class TokenService {
                     .issuedAt(now)
                     .expiresAt(now.plusSeconds(15))
                     .subject(userModel.get().getUsername())
-                    .claim("role", role)
+                    .claim("role", "ROLE_" + role)
                     .build();
 
             //refresh token
