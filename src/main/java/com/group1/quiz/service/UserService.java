@@ -112,6 +112,7 @@ public class UserService implements UserDetailsService {
 
     private UserResponse userResponseMapping(UserModel userModel) {
         return UserResponse.builder()
+                .id(userModel.getId())
                 .name(userModel.getUsername())
                 .email(userModel.getEmail())
                 .role(userModel.getRole())
@@ -124,6 +125,7 @@ public class UserService implements UserDetailsService {
         Optional<UserModel> userModel = userRepository.findById(id);
         if(userModel.isPresent()) {
             return UserResponse.builder()
+                    .id(userModel.get().getId())
                     .name(userModel.get().getUsername())
                     .email(userModel.get().getEmail())
                     .role(userModel.get().getRole())
