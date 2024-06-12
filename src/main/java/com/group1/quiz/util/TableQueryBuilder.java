@@ -10,13 +10,15 @@ import org.springframework.data.mongodb.core.query.Query;
 @Slf4j
 public class TableQueryBuilder {
     private final String search;
+    private final String searchBy;
     private final String orderBy;
     private final OrderEnum order;
     private final int page;
     private final int size;
 
-    public TableQueryBuilder(String search, String orderBy, OrderEnum order, int page, int size) {
+    public TableQueryBuilder(String search, String searchBy, String orderBy, OrderEnum order, int page, int size ) {
         this.search = search;
+        this.searchBy = searchBy;
         this.orderBy = orderBy;
         this.order = order;
         this.page = page;
@@ -26,7 +28,7 @@ public class TableQueryBuilder {
     public Query getQuery(){
         Query query = new Query();
         if(!StringUtils.isEmpty(search)) {
-            query.addCriteria(Criteria.where("name").regex(".*"+search+".*", "i"));
+            query.addCriteria(Criteria.where(this.searchBy).regex(".*"+search+".*", "i"));
         }
         log.info(this.search);
         if(order.equals(OrderEnum.DESC)) {

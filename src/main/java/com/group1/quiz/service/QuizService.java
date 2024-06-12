@@ -60,7 +60,7 @@ public class QuizService {
 
     public TableResponse<QuizzesResponse> getQuizzes(QuizOrderByEnum orderBy, OrderEnum order, int page, int size, String search) throws Exception {
         long count;
-        TableQueryBuilder tableQueryBuilder = new TableQueryBuilder(search, orderBy.getValue(), order, page, size);
+        TableQueryBuilder tableQueryBuilder = new TableQueryBuilder(search, "name", orderBy.getValue(), order, page, size);
 
         List<QuizModel> quizModels = mongoTemplate.find(tableQueryBuilder.getQuery(), QuizModel.class);
 

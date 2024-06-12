@@ -95,7 +95,7 @@ public class UserService implements UserDetailsService {
 
     public TableResponse<UserResponse> getUsers(UserOrderByEnum orderBy, OrderEnum order, int page, int size, String search) throws Exception {
         long count;
-        TableQueryBuilder tableQueryBuilder = new TableQueryBuilder(search, orderBy.getValue(), order, page, size);
+        TableQueryBuilder tableQueryBuilder = new TableQueryBuilder(search, "username", orderBy.getValue(), order, page, size);
 
         List<UserModel> userModels = mongoTemplate.find(tableQueryBuilder.getQuery(), UserModel.class);
 
