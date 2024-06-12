@@ -17,6 +17,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import javax.swing.text.html.Option;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -49,8 +50,10 @@ public class UserService implements UserDetailsService {
         throw new RuntimeException("User Not Found");
     }
     public void createUser(UserRequest userDto) throws Exception {
-        if(userRepository.findUserByUsername(userDto.getUsername()).isPresent()) {
-            throw new ResponseStatusException("Username already exists", HttpStatus.BAD_REQUEST);
+        boolean isUserExist = userRepository.existsByUsername(userDto.getUsername());
+        boolean isEmailExist = userRepository.existsByEmail(userDto.getEmail());
+        if(isUserExist || isEmailExist) {
+            throw new ResponseStatusException("User or Email is Already in used", HttpStatus.BAD_REQUEST);
         }
         UserModel userModel = new UserModel(userDto);
         String encodedPassword = new BCryptPasswordEncoder().encode(userModel.getPassword());
@@ -63,6 +66,13 @@ public class UserService implements UserDetailsService {
 
     public void updateUser(String id, UserRequest userDto) throws ResponseStatusException {
         Optional<UserModel> userModel = userRepository.findById(id);
+        boolean isUserExist = userRepository.existsByUsername(userDto.getUsername());
+        boolean isEmailExist = userRepository.existsByEmail(userDto.getEmail());
+
+        if(isUserExist || isEmailExist) {
+            throw new ResponseStatusException("User or Email is Already in used", HttpStatus.BAD_REQUEST);
+        }
+
         if(userModel.isPresent()) {
             UserModel user = userMapping(userModel.get(), userDto);
             userRepository.save(user);
