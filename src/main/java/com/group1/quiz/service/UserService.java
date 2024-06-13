@@ -66,11 +66,26 @@ public class UserService implements UserDetailsService {
 
     public void updateUser(String id, UserRequest userDto) throws ResponseStatusException {
         Optional<UserModel> userModel = userRepository.findById(id);
-        boolean isUserExist = userRepository.existsByUsername(userDto.getUsername());
-        boolean isEmailExist = userRepository.existsByEmail(userDto.getEmail());
 
-        if(isUserExist || isEmailExist) {
-            throw new ResponseStatusException("User or Email is Already in used", HttpStatus.BAD_REQUEST);
+        List<UserModel> AllUsername = userRepository.findAllByUsername(userDto.getUsername());
+        List<UserModel> AllEmail = userRepository.findAllByEmail(userDto.getEmail());
+
+        for(UserModel user : AllUsername) {
+            if(Objects.equals(user.getId(), id)) {
+                continue;
+            }
+            if(Objects.equals(user.getUsername(), userDto.getUsername())) {
+                throw new ResponseStatusException("Username already exists", HttpStatus.BAD_REQUEST);
+            }
+        }
+
+        for(UserModel user : AllEmail) {
+            if(Objects.equals(user.getId(), id)) {
+                continue;
+            }
+            if(Objects.equals(user.getEmail(), userDto.getEmail())) {
+                throw new ResponseStatusException("Email already exists", HttpStatus.BAD_REQUEST);
+            }
         }
 
         if(userModel.isPresent()) {
