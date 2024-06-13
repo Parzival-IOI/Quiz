@@ -98,6 +98,18 @@ public class UserService implements UserDetailsService {
     }
 
     private UserModel userMapping(UserModel userModel, UserRequest userDto) {
+
+        if(userDto.getPassword().isEmpty()) {
+            return UserModel.builder()
+                    .id(userModel.getId())
+                    .username(userDto.getUsername())
+                    .password(userModel.getPassword())
+                    .email(userDto.getEmail())
+                    .role(userDto.getRole())
+                    .createdAt(userModel.getCreatedAt())
+                    .updatedAt(Date.from(Instant.now()))
+                    .build() ;
+        }
         return UserModel.builder()
                 .id(userModel.getId())
                 .username(userDto.getUsername())
