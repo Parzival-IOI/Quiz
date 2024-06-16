@@ -94,6 +94,9 @@ public class TokenService {
                     throw new ResponseStatusException("invalid", HttpStatus.BAD_REQUEST);
                 }
             }
+            else {
+                throw new ResponseStatusException("invalid", HttpStatus.BAD_REQUEST);
+            }
 
             Instant now = Instant.now();
             String role = userModel.get().getRole().getValue();

@@ -7,7 +7,9 @@ import com.group1.quiz.dataTransferObject.UserDTO.UserResponse;
 import com.group1.quiz.enums.OrderEnum;
 import com.group1.quiz.enums.UserOrderByEnum;
 import com.group1.quiz.enums.UserRoleEnum;
+import com.group1.quiz.model.LoginModel;
 import com.group1.quiz.model.UserModel;
+import com.group1.quiz.repository.LoginRepository;
 import com.group1.quiz.repository.UserRepository;
 import com.group1.quiz.util.ResponseStatusException;
 import com.group1.quiz.util.TableQueryBuilder;
@@ -27,6 +29,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -35,6 +38,7 @@ import org.springframework.stereotype.Service;
 public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
     private final MongoTemplate mongoTemplate;
+    private final LoginRepository loginRepository;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -208,6 +212,21 @@ public class UserService implements UserDetailsService {
             return userModel.get().getRole().getValue();
         } else {
             throw new ResponseStatusException("User not found", HttpStatus.NOT_FOUND);
+        }
+    }
+
+    public void logout(Principal principal, Jwt jwt) throws Exception {
+        Optional<LoginModel> loginModel = loginRepository.findByUserName(principal.getName());
+        if(loginModel.isPresent()) {
+            if(loginModel.get().getRefreshToken().equals(jwt.getTokenValue())){
+                loginRepository.delete(loginModel.get());
+            }
+            else {
+                throw new ResponseStatusException("Token incorrect", HttpStatus.BAD_REQUEST);
+            }
+        }
+        else {
+            throw new ResponseStatusException("User Not Found", HttpStatus.BAD_REQUEST);
         }
     }
 }
