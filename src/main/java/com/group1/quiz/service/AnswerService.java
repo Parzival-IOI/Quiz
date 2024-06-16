@@ -4,6 +4,7 @@ import com.group1.quiz.dataTransferObject.AnswerDTO.CreateAnswerRequest;
 import com.group1.quiz.dataTransferObject.AnswerDTO.UpdateAnswerRequest;
 import com.group1.quiz.model.AnswerModel;
 import com.group1.quiz.repository.AnswerRepository;
+import com.group1.quiz.repository.QuestionRepository;
 import com.group1.quiz.util.ResponseStatusException;
 import java.time.Instant;
 import java.util.Date;
@@ -16,16 +17,22 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AnswerService {
     private final AnswerRepository answerRepository;
+    private final QuestionRepository questionRepository;
 
-    public void createAnswer(CreateAnswerRequest createAnswerRequest) throws Exception {
-        AnswerModel answerModel = AnswerModel.builder()
-                .answer(createAnswerRequest.getAnswer())
-                .isCorrect(createAnswerRequest.isCorrect())
-                .questionId(createAnswerRequest.getQuestionId())
-                .createdAt(Date.from(Instant.now()))
-                .updatedAt(Date.from(Instant.now()))
-                .build();
-        answerRepository.insert(answerModel);
+    public AnswerModel createAnswer(CreateAnswerRequest createAnswerRequest) throws Exception {
+        boolean isQuestion = questionRepository.existsById(createAnswerRequest.getQuestionId());
+        if(isQuestion) {
+            AnswerModel answerModel = AnswerModel.builder()
+                    .answer(createAnswerRequest.getAnswer())
+                    .isCorrect(createAnswerRequest.isCorrect())
+                    .questionId(createAnswerRequest.getQuestionId())
+                    .createdAt(Date.from(Instant.now()))
+                    .updatedAt(Date.from(Instant.now()))
+                    .build();
+            answerRepository.insert(answerModel);
+            return answerModel;
+        }
+        throw new ResponseStatusException("Question Not Found", HttpStatus.NOT_FOUND);
     }
 
     public void updateAnswer(String id, UpdateAnswerRequest updateAnswerRequest) throws Exception {

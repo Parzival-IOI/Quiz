@@ -2,6 +2,7 @@ package com.group1.quiz.controller;
 
 import com.group1.quiz.dataTransferObject.AnswerDTO.CreateAnswerRequest;
 import com.group1.quiz.dataTransferObject.AnswerDTO.UpdateAnswerRequest;
+import com.group1.quiz.model.AnswerModel;
 import com.group1.quiz.service.AnswerService;
 import com.group1.quiz.util.ResponseStatusException;
 import lombok.RequiredArgsConstructor;
@@ -25,8 +26,9 @@ public class AnswerController {
 
     @PostMapping("/create")
     public ResponseEntity<?> createAnswer(@RequestBody CreateAnswerRequest createAnswerRequest) {
+        AnswerModel answerModel;
         try {
-            answerService.createAnswer(createAnswerRequest);
+            answerModel = answerService.createAnswer(createAnswerRequest);
         } catch (ResponseStatusException e) {
             log.info(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), e.getCode());
@@ -34,7 +36,7 @@ public class AnswerController {
             log.info(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity<>("success", HttpStatus.OK);
+        return new ResponseEntity<>(answerModel, HttpStatus.OK);
     }
 
     @PutMapping("/update/{id}")
