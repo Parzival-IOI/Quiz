@@ -83,8 +83,9 @@ public class QuizController {
 
     @PostMapping("/create")
     public ResponseEntity<?> createQuiz(@RequestBody CreateQuizRequest createQuizRequest, Principal principal) {
+        QuizResponse quizResponse;
         try {
-            quizService.createQuiz(createQuizRequest, principal);
+            quizResponse = quizService.createQuiz(createQuizRequest, principal);
         } catch (ResponseStatusException e) {
             log.info(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), e.getCode());
@@ -92,7 +93,7 @@ public class QuizController {
             log.info(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity<>("success", HttpStatus.CREATED);
+        return new ResponseEntity<>(quizResponse, HttpStatus.CREATED);
     }
 
     @PutMapping("/update/{id}")

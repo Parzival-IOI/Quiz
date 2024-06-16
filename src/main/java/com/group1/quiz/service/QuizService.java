@@ -148,7 +148,7 @@ public class QuizService {
                 .build();
     }
 
-    public void createQuiz(CreateQuizRequest createQuizRequest, Principal principal) throws Exception {
+    public QuizResponse createQuiz(CreateQuizRequest createQuizRequest, Principal principal) throws Exception {
         Optional<UserModel> userModel = userRepository.findUserByUsername(principal.getName());
         if (userModel.isPresent()) {
             QuizModel quizModel = new QuizModel();
@@ -184,6 +184,19 @@ public class QuizService {
                     answerRepository.save(answerModel);
                 }
             }
+
+            Optional<QuizModel> quizModel1 = quizRepository.findById(quizModel.getId());
+            if(quizModel1.isPresent()) {
+                List<QuestionModel> questionModels1 = questionRepository.findByQuizId(quizModel1.get().getId());
+                List<QuestionResponse> questionResponses = new ArrayList<>();
+                for (QuestionModel questionModel : questionModels1) {
+                    List<AnswerModel> answerModels = answerRepository.findByQuestionId(questionModel.getId());
+                    List<AnswerResponse> answerResponses = answerModels.stream().map(this::answerResponseMapping).toList();
+                    questionResponses.add(questionResponseMapping(questionModel, answerResponses));
+                }
+                return quizResponseMapping(quizModel1.get(), questionResponses);
+            }
+            return null;
         }
         else {
             throw new ResponseStatusException("User not found", HttpStatus.NOT_FOUND);
