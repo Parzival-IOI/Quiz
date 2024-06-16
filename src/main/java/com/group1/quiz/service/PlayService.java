@@ -179,7 +179,7 @@ public class PlayService {
                 throw new ResponseStatusException("Permission Denied", HttpStatus.FORBIDDEN);
         }
         long count;
-        TableQueryBuilder tableQueryBuilder = new TableQueryBuilder(search, orderBy.getValue(), order, page, size);
+        TableQueryBuilder tableQueryBuilder = new TableQueryBuilder(search, "userId", orderBy.getValue(), order, page, size);
 
         List<PlayModel> playModels = mongoTemplate.find(tableQueryBuilder.getQuery(), PlayModel.class);
 

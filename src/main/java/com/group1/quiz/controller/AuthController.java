@@ -1,6 +1,7 @@
 package com.group1.quiz.controller;
 
 
+import com.group1.quiz.dataTransferObject.AuthResponse;
 import com.group1.quiz.dataTransferObject.LoginRequest;
 import com.group1.quiz.dataTransferObject.UserDTO.UserRegisterRequest;
 import com.group1.quiz.enums.UserRoleEnum;
@@ -10,11 +11,14 @@ import com.group1.quiz.util.ResponseStatusException;
 import java.security.Principal;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.security.oauth2.resource.OAuth2ResourceServerProperties;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,13 +29,52 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class AuthController {
     private final TokenService tokenService;
-    private final AuthenticationManager authenticationManager;
     private final UserService userService;
 
     @PostMapping("/auth")
-    public String token(@RequestBody LoginRequest loginRequest) {
-        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.username(), loginRequest.password()));
-        return tokenService.generateToken(authentication);
+    public ResponseEntity<?> token(@RequestBody LoginRequest loginRequest) {
+        AuthResponse authResponse;
+        try {
+            authResponse = tokenService.generateToken(loginRequest);
+        } catch (ResponseStatusException e) {
+            log.info(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), e.getCode());
+        } catch (Exception e) {
+            log.info(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return new ResponseEntity<>(authResponse, HttpStatus.OK);
+    }
+
+    @PostMapping("/refreshToken")
+    public ResponseEntity<?> refreshToken(Principal principal, @AuthenticationPrincipal Jwt jwt) {
+        log.info(principal.getName());
+        AuthResponse authResponse;
+        try {
+            authResponse = tokenService.generateRefreshToken(principal, jwt);
+        } catch (ResponseStatusException e) {
+            log.info(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), e.getCode());
+        } catch (Exception e) {
+            log.info(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return new ResponseEntity<>(authResponse, HttpStatus.OK);
+    }
+
+    @PostMapping("/quit")
+    public ResponseEntity<?> logout(Principal principal, @AuthenticationPrincipal Jwt jwt) {
+        log.info(principal.getName());
+        try {
+            userService.logout(principal, jwt);
+        } catch (ResponseStatusException e) {
+            log.info(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), e.getCode());
+        } catch (Exception e) {
+            log.info(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @PostMapping("/register")

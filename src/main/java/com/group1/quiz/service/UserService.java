@@ -7,7 +7,9 @@ import com.group1.quiz.dataTransferObject.UserDTO.UserResponse;
 import com.group1.quiz.enums.OrderEnum;
 import com.group1.quiz.enums.UserOrderByEnum;
 import com.group1.quiz.enums.UserRoleEnum;
+import com.group1.quiz.model.LoginModel;
 import com.group1.quiz.model.UserModel;
+import com.group1.quiz.repository.LoginRepository;
 import com.group1.quiz.repository.UserRepository;
 import com.group1.quiz.util.ResponseStatusException;
 import com.group1.quiz.util.TableQueryBuilder;
@@ -17,6 +19,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import javax.swing.text.html.Option;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -24,7 +27,9 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -33,20 +38,26 @@ import org.springframework.stereotype.Service;
 public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
     private final MongoTemplate mongoTemplate;
+    private final LoginRepository loginRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String username) {
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Optional<UserModel> userModel = userRepository.findUserByUsername(username);
 
-        return userModel.map(model -> org.springframework.security.core.userdetails.User.builder()
-                .username(model.getUsername())
-                .password(model.getPassword())
-                .roles(model.getRole().getValue())
-                .build()).orElse(null);
+        if(userModel.isPresent()) {
+            return org.springframework.security.core.userdetails.User.builder()
+                    .username(userModel.get().getUsername())
+                    .password(userModel.get().getPassword())
+                    .roles(userModel.get().getRole().getValue())
+                    .build();
+        }
+        throw new RuntimeException("User Not Found");
     }
     public void createUser(UserRequest userDto) throws Exception {
-        if(userRepository.findUserByUsername(userDto.getUsername()).isPresent()) {
-            throw new ResponseStatusException("Username already exists", HttpStatus.BAD_REQUEST);
+        boolean isUserExist = userRepository.existsByUsername(userDto.getUsername());
+        boolean isEmailExist = userRepository.existsByEmail(userDto.getEmail());
+        if(isUserExist || isEmailExist) {
+            throw new ResponseStatusException("User or Email is Already in used", HttpStatus.BAD_REQUEST);
         }
         UserModel userModel = new UserModel(userDto);
         String encodedPassword = new BCryptPasswordEncoder().encode(userModel.getPassword());
@@ -59,6 +70,28 @@ public class UserService implements UserDetailsService {
 
     public void updateUser(String id, UserRequest userDto) throws ResponseStatusException {
         Optional<UserModel> userModel = userRepository.findById(id);
+
+        List<UserModel> AllUsername = userRepository.findAllByUsername(userDto.getUsername());
+        List<UserModel> AllEmail = userRepository.findAllByEmail(userDto.getEmail());
+
+        for(UserModel user : AllUsername) {
+            if(Objects.equals(user.getId(), id)) {
+                continue;
+            }
+            if(Objects.equals(user.getUsername(), userDto.getUsername())) {
+                throw new ResponseStatusException("Username already exists", HttpStatus.BAD_REQUEST);
+            }
+        }
+
+        for(UserModel user : AllEmail) {
+            if(Objects.equals(user.getId(), id)) {
+                continue;
+            }
+            if(Objects.equals(user.getEmail(), userDto.getEmail())) {
+                throw new ResponseStatusException("Email already exists", HttpStatus.BAD_REQUEST);
+            }
+        }
+
         if(userModel.isPresent()) {
             UserModel user = userMapping(userModel.get(), userDto);
             userRepository.save(user);
@@ -69,6 +102,18 @@ public class UserService implements UserDetailsService {
     }
 
     private UserModel userMapping(UserModel userModel, UserRequest userDto) {
+
+        if(userDto.getPassword().isEmpty()) {
+            return UserModel.builder()
+                    .id(userModel.getId())
+                    .username(userDto.getUsername())
+                    .password(userModel.getPassword())
+                    .email(userDto.getEmail())
+                    .role(userDto.getRole())
+                    .createdAt(userModel.getCreatedAt())
+                    .updatedAt(Date.from(Instant.now()))
+                    .build() ;
+        }
         return UserModel.builder()
                 .id(userModel.getId())
                 .username(userDto.getUsername())
@@ -91,7 +136,7 @@ public class UserService implements UserDetailsService {
 
     public TableResponse<UserResponse> getUsers(UserOrderByEnum orderBy, OrderEnum order, int page, int size, String search) throws Exception {
         long count;
-        TableQueryBuilder tableQueryBuilder = new TableQueryBuilder(search, orderBy.getValue(), order, page, size);
+        TableQueryBuilder tableQueryBuilder = new TableQueryBuilder(search, "username", orderBy.getValue(), order, page, size);
 
         List<UserModel> userModels = mongoTemplate.find(tableQueryBuilder.getQuery(), UserModel.class);
 
@@ -108,6 +153,7 @@ public class UserService implements UserDetailsService {
 
     private UserResponse userResponseMapping(UserModel userModel) {
         return UserResponse.builder()
+                .id(userModel.getId())
                 .name(userModel.getUsername())
                 .email(userModel.getEmail())
                 .role(userModel.getRole())
@@ -120,6 +166,7 @@ public class UserService implements UserDetailsService {
         Optional<UserModel> userModel = userRepository.findById(id);
         if(userModel.isPresent()) {
             return UserResponse.builder()
+                    .id(userModel.get().getId())
                     .name(userModel.get().getUsername())
                     .email(userModel.get().getEmail())
                     .role(userModel.get().getRole())
@@ -165,6 +212,21 @@ public class UserService implements UserDetailsService {
             return userModel.get().getRole().getValue();
         } else {
             throw new ResponseStatusException("User not found", HttpStatus.NOT_FOUND);
+        }
+    }
+
+    public void logout(Principal principal, Jwt jwt) throws Exception {
+        Optional<LoginModel> loginModel = loginRepository.findByUserName(principal.getName());
+        if(loginModel.isPresent()) {
+            if(loginModel.get().getRefreshToken().equals(jwt.getTokenValue())){
+                loginRepository.delete(loginModel.get());
+            }
+            else {
+                throw new ResponseStatusException("Token incorrect", HttpStatus.BAD_REQUEST);
+            }
+        }
+        else {
+            throw new ResponseStatusException("User Not Found", HttpStatus.BAD_REQUEST);
         }
     }
 }

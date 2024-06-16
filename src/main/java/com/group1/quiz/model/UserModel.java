@@ -21,19 +21,28 @@ import org.springframework.data.mongodb.core.mapping.Field;
 @Builder
 @Data
 public class UserModel {
-    @Transient
-    public static final String SEQUENCE_NAME = "projects_sequence";
     @Id
     private String id;
+
     @Indexed(unique = true)
+    @Field(name="username")
     private String username;
+
+    @Field(name="password")
     private String password;
+
     @Email(regexp = "[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,3}", flags = Pattern.Flag.CASE_INSENSITIVE)
     @Indexed(unique = true)
+    @Field(name="email")
     private String email;
+
     @Field(name="role")
     private UserRoleEnum role;
+
+    @Field(name="createdAt")
     private Date createdAt;
+
+    @Field(name="updatedAt")
     private Date updatedAt;
 
     public UserModel(UserRequest userDto) {

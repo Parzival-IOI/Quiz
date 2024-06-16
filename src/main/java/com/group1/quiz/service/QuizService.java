@@ -12,6 +12,7 @@ import com.group1.quiz.enums.QuizOrderByEnum;
 import com.group1.quiz.dataTransferObject.QuizDTO.QuizResponse;
 import com.group1.quiz.dataTransferObject.TableResponse;
 import com.group1.quiz.dataTransferObject.QuizDTO.QuizzesResponse;
+import com.group1.quiz.enums.UserRoleEnum;
 import com.group1.quiz.model.AnswerModel;
 import com.group1.quiz.model.QuestionModel;
 import com.group1.quiz.model.QuizModel;
@@ -60,7 +61,7 @@ public class QuizService {
 
     public TableResponse<QuizzesResponse> getQuizzes(QuizOrderByEnum orderBy, OrderEnum order, int page, int size, String search) throws Exception {
         long count;
-        TableQueryBuilder tableQueryBuilder = new TableQueryBuilder(search, orderBy.getValue(), order, page, size);
+        TableQueryBuilder tableQueryBuilder = new TableQueryBuilder(search, "name", orderBy.getValue(), order, page, size);
 
         List<QuizModel> quizModels = mongoTemplate.find(tableQueryBuilder.getQuery(), QuizModel.class);
 
@@ -91,7 +92,7 @@ public class QuizService {
         if(userModel.isPresent()) {
             Optional<QuizModel> quizModel = quizRepository.findById(id);
             if(quizModel.isPresent()) {
-                if(quizModel.get().getUserId().equals(userModel.get().getId())) {
+                if(quizModel.get().getUserId().equals(userModel.get().getId()) || userModel.get().getRole().equals(UserRoleEnum.ADMIN)) {
                     List<QuestionModel> questionModels = questionRepository.findByQuizId(quizModel.get().getId());
                     List<QuestionResponse> questionResponses = new ArrayList<>();
                     for(QuestionModel questionModel : questionModels) {
@@ -147,7 +148,7 @@ public class QuizService {
                 .build();
     }
 
-    public void createQuiz(CreateQuizRequest createQuizRequest, Principal principal) throws Exception {
+    public QuizResponse createQuiz(CreateQuizRequest createQuizRequest, Principal principal) throws Exception {
         Optional<UserModel> userModel = userRepository.findUserByUsername(principal.getName());
         if (userModel.isPresent()) {
             QuizModel quizModel = new QuizModel();
@@ -183,6 +184,19 @@ public class QuizService {
                     answerRepository.save(answerModel);
                 }
             }
+
+            Optional<QuizModel> quizModel1 = quizRepository.findById(quizModel.getId());
+            if(quizModel1.isPresent()) {
+                List<QuestionModel> questionModels1 = questionRepository.findByQuizId(quizModel1.get().getId());
+                List<QuestionResponse> questionResponses = new ArrayList<>();
+                for (QuestionModel questionModel : questionModels1) {
+                    List<AnswerModel> answerModels = answerRepository.findByQuestionId(questionModel.getId());
+                    List<AnswerResponse> answerResponses = answerModels.stream().map(this::answerResponseMapping).toList();
+                    questionResponses.add(questionResponseMapping(questionModel, answerResponses));
+                }
+                return quizResponseMapping(quizModel1.get(), questionResponses);
+            }
+            return null;
         }
         else {
             throw new ResponseStatusException("User not found", HttpStatus.NOT_FOUND);
