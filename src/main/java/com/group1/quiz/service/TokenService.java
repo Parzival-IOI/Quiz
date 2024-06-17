@@ -44,7 +44,7 @@ public class TokenService {
         JwtClaimsSet accessToken = JwtClaimsSet.builder()
                 .issuer("self")
                 .issuedAt(now)
-                .expiresAt(now.plusSeconds(15))
+                .expiresAt(now.plusSeconds(15*60))
                 .subject(authentication.getName())
                 .claim("role", role)
                 .build();
@@ -104,7 +104,7 @@ public class TokenService {
             JwtClaimsSet accessToken = JwtClaimsSet.builder()
                     .issuer("self")
                     .issuedAt(now)
-                    .expiresAt(now.plusSeconds(15))
+                    .expiresAt(now.plusSeconds(15*60))
                     .subject(userModel.get().getUsername())
                     .claim("role", "ROLE_" + role)
                     .build();
