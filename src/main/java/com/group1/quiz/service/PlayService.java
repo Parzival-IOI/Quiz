@@ -7,6 +7,8 @@ import com.group1.quiz.dataTransferObject.PlayDTO.PlayQuizRequest;
 import com.group1.quiz.dataTransferObject.PlayDTO.PlayQuizResponse;
 import com.group1.quiz.dataTransferObject.PlayDTO.PlayResponse;
 import com.group1.quiz.dataTransferObject.PlayDTO.PlaySubmitResponse;
+import com.group1.quiz.dataTransferObject.PlayDTO.PlayedAnswer;
+import com.group1.quiz.dataTransferObject.PlayDTO.PlayedAnswers;
 import com.group1.quiz.dataTransferObject.PlayDTO.PlaysResponse;
 import com.group1.quiz.dataTransferObject.TableResponse;
 import com.group1.quiz.enums.OrderEnum;
@@ -30,6 +32,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -184,14 +187,40 @@ public class PlayService {
     }
 
     public PlayResponse playResponseMapping(PlayModel playModel) {
+        List<PlayedAnswers> playedAnswers = playModel.getAnswers().stream().map(this::playAnswerMapping).toList();
+        String description = "";
+        Optional<QuizModel> quizModel = quizRepository.findById(playModel.getQuizId());
+        if(quizModel.isPresent()) {
+            description = quizModel.get().getDescription();
+        }
         return PlayResponse.builder()
                 .id(playModel.getId())
                 .score(playModel.getScore())
-                .answers(playModel.getAnswers())
+                .answers(playedAnswers)
                 .quizId(playModel.getQuizId())
                 .quizName(playModel.getQuizName())
+                .quizDescription(description)
                 .createdAt(playModel.getCreatedAt())
                 .updatedAt(playModel.getUpdatedAt())
+                .build();
+    }
+
+    private PlayedAnswers playAnswerMapping(PlayQuestionRequest playQuestionRequest) {
+        List<AnswerModel> answerModel = answerRepository.findByQuestionId(playQuestionRequest.getQuestionId());
+        List<PlayedAnswer> playedAnswers = answerModel.stream().map(e->this.playAnswerMapping(e, playQuestionRequest.getAnswerId())).toList();
+        Optional<QuestionModel> questionModel = questionRepository.findById(playQuestionRequest.getQuestionId());
+        return questionModel.map(model -> PlayedAnswers.builder()
+                .question(model.getQuestion())
+                .type(model.getType())
+                .answers(playedAnswers)
+                .build()).orElse(null);
+    }
+
+    private PlayedAnswer playAnswerMapping(AnswerModel answerModel, String answerId) {
+        return PlayedAnswer.builder()
+                .answer(answerModel.getAnswer())
+                .isCorrect(answerModel.isCorrect())
+                .isPick(answerModel.getId().equals(answerId))
                 .build();
     }
 
