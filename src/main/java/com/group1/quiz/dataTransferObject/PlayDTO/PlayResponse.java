@@ -12,7 +12,7 @@ import lombok.Setter;
 public class PlayResponse {
     private String id;
     private double score;
-    private List<PlayedAnswers> answers;
+    private List<PlayedAnswers> answered;
     private String quizId;
     private String quizName;
     private String quizDescription;
