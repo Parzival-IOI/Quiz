@@ -6,6 +6,7 @@ import com.group1.quiz.dataTransferObject.PlayDTO.PlayQuestionResponse;
 import com.group1.quiz.dataTransferObject.PlayDTO.PlayQuizRequest;
 import com.group1.quiz.dataTransferObject.PlayDTO.PlayQuizResponse;
 import com.group1.quiz.dataTransferObject.PlayDTO.PlayResponse;
+import com.group1.quiz.dataTransferObject.PlayDTO.PlaySubmitResponse;
 import com.group1.quiz.dataTransferObject.PlayDTO.PlaysResponse;
 import com.group1.quiz.dataTransferObject.TableResponse;
 import com.group1.quiz.enums.OrderEnum;
@@ -26,6 +27,7 @@ import com.group1.quiz.util.ResponseStatusException;
 import com.group1.quiz.util.TableQueryBuilder;
 import java.security.Principal;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -91,15 +93,18 @@ public class PlayService {
                 .build();
     }
 
-    public int playQuizSummit(PlayQuizRequest playQuizRequest, Principal principal) throws Exception {
+    public PlaySubmitResponse playQuizSummit(PlayQuizRequest playQuizRequest, Principal principal) throws Exception {
         int point = 0;
         Optional<UserModel> userModel = userRepository.findUserByUsername(principal.getName());
         Optional<QuizModel> quizModel = quizRepository.findById(playQuizRequest.getId());
         if (quizModel.isPresent() && userModel.isPresent()) {
             List<PlayQuestionRequest> questionRequests = playQuizRequest.getQuestions();
+            List<String> questionDuplicate = new ArrayList<>();
             for (PlayQuestionRequest questionRequest : questionRequests) {
                 Optional<QuestionModel> questionModel = questionRepository.findById(questionRequest.getQuestionId());
                 if(questionModel.isPresent()) {
+
+//
 //                    List<AnswerModel> answerModels = answerRepository.findByQuestionId(questionRequest.getQuestionId());
 //                    for (AnswerModel answerModel : answerModels) {
 //                        for(String answerId : questionRequest.getAnswerId()) {
@@ -108,6 +113,12 @@ public class PlayService {
 //                            }
 //                        }
 //                    }
+
+                    if(questionDuplicate.contains(questionModel.get().getId())) {
+                        continue;
+                    } else {
+                        questionDuplicate.add(questionModel.get().getId());
+                    }
                     Optional<AnswerModel> answerModel = answerRepository.findById(questionRequest.getAnswerId());
                     if(answerModel.isPresent()) {
                         if(answerModel.get().isCorrect()) {
@@ -146,8 +157,13 @@ public class PlayService {
                                 .build()
                 );
             }
+            // need to implement when add score column in questions table
+            int total = questionRepository.findByQuizId(playQuizRequest.getId()).size();
 
-            return point;
+            return PlaySubmitResponse.builder()
+                    .total(total)
+                    .score(point)
+                    .build();
         }
         else {
             throw new ResponseStatusException("Quiz/User Not Found", HttpStatus.NOT_FOUND);

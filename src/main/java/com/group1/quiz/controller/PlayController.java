@@ -4,6 +4,7 @@ package com.group1.quiz.controller;
 import com.group1.quiz.dataTransferObject.PlayDTO.PlayQuizRequest;
 import com.group1.quiz.dataTransferObject.PlayDTO.PlayQuizResponse;
 import com.group1.quiz.dataTransferObject.PlayDTO.PlayResponse;
+import com.group1.quiz.dataTransferObject.PlayDTO.PlaySubmitResponse;
 import com.group1.quiz.dataTransferObject.PlayDTO.PlaysResponse;
 import com.group1.quiz.dataTransferObject.TableResponse;
 import com.group1.quiz.dataTransferObject.QuizDTO.QuizzesResponse;
@@ -97,9 +98,9 @@ public class PlayController {
 
     @PostMapping("/quiz/summit")
     public ResponseEntity<?> playQuizSummit(@RequestBody PlayQuizRequest playQuizRequest, Principal principal) {
-        int point;
+        PlaySubmitResponse playSubmitResponse;
         try {
-            point = playService.playQuizSummit(playQuizRequest, principal);
+            playSubmitResponse = playService.playQuizSummit(playQuizRequest, principal);
         } catch (ResponseStatusException e) {
             log.info(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), e.getCode());
@@ -107,7 +108,7 @@ public class PlayController {
             log.info(e.getMessage());
             return new ResponseEntity<>(e.getMessage() + Arrays.toString(e.getStackTrace()), HttpStatus.NOT_FOUND);
         }
-        return new ResponseEntity<>(point, HttpStatus.OK);
+        return new ResponseEntity<>(playSubmitResponse, HttpStatus.OK);
     }
 
     @DeleteMapping("/delete/{id}")
