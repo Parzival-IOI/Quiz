@@ -196,7 +196,7 @@ public class PlayService {
         return PlayResponse.builder()
                 .id(playModel.getId())
                 .score(playModel.getScore())
-                .answers(playedAnswers)
+                .answered(playedAnswers)
                 .quizId(playModel.getQuizId())
                 .quizName(playModel.getQuizName())
                 .quizDescription(description)
