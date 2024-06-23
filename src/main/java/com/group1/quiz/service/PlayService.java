@@ -116,7 +116,7 @@ public class PlayService {
                     }
                 }
             }
-            Query query = Query.query(Criteria.where("userId").is(userModel.get().getId())).addCriteria(Criteria.where("quizId").is(playQuizRequest.getId()));
+            Query query = Query.query(Criteria.where("username").is(userModel.get().getUsername())).addCriteria(Criteria.where("quizId").is(playQuizRequest.getId()));
             PlayModel playModel = mongoTemplate.findOne(query, PlayModel.class);
 
             if(playModel != null) {
@@ -124,7 +124,7 @@ public class PlayService {
                         PlayModel.builder()
                                 .id(playModel.getId())
                                 .score(point)
-                                .userId(userModel.get().getId())
+                                .username(userModel.get().getUsername())
                                 .quizId(playQuizRequest.getId())
                                 .quizName(quizModel.get().getName())
                                 .answers(playQuizRequest.getQuestions())
@@ -137,7 +137,7 @@ public class PlayService {
                 playRepository.insert(
                         PlayModel.builder()
                                 .score(point)
-                                .userId(userModel.get().getId())
+                                .username(userModel.get().getUsername())
                                 .quizId(playQuizRequest.getId())
                                 .quizName(quizModel.get().getName())
                                 .answers(playQuizRequest.getQuestions())
@@ -158,7 +158,7 @@ public class PlayService {
         Optional<PlayModel> playModel = playRepository.findById(id);
         Optional<UserModel> userModel = userRepository.findUserByUsername(principal.getName());
         if(playModel.isPresent() && userModel.isPresent()) {
-            if(playModel.get().getUserId().equals(userModel.get().getId()) || userModel.get().getRole().equals(UserRoleEnum.ADMIN))
+            if(playModel.get().getUsername().equals(userModel.get().getUsername()) || userModel.get().getRole().equals(UserRoleEnum.ADMIN))
                 return playResponseMapping(playModel.get());
             throw new ResponseStatusException("Permission Denied", HttpStatus.BAD_REQUEST);
         }
@@ -221,7 +221,7 @@ public class PlayService {
             throw new ResponseStatusException("Permission Denied", HttpStatus.FORBIDDEN);
         }
         Query query = new Query();
-        query.addCriteria(Criteria.where("userId").is(userModel.get().getId()));
+        query.addCriteria(Criteria.where("username").is(userModel.get().getUsername()));
         if(!StringUtils.isEmpty(search)) {
             query.addCriteria(Criteria.where("quizName").regex(".*"+search+".*", "i"));
         }
@@ -249,7 +249,7 @@ public class PlayService {
         Optional<PlayModel> playModel = playRepository.findById(id);
         Optional<UserModel> userModel = userRepository.findUserByUsername(principal.getName());
         if(playModel.isPresent() && userModel.isPresent()) {
-            if(playModel.get().getUserId().equals(userModel.get().getId()) || userModel.get().getRole().equals( UserRoleEnum.ADMIN)) {
+            if(playModel.get().getUsername().equals(userModel.get().getUsername()) || userModel.get().getRole().equals( UserRoleEnum.ADMIN)) {
                 playRepository.deleteById(id);
             }
             else {

@@ -19,7 +19,7 @@ public class PlayModel {
     @Id
     private String id;
     private double score;
-    private String userId;
+    private String username;
     private String quizId;
     private String quizName;
     private List<PlayQuestionRequest> answers;

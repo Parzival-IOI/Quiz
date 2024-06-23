@@ -8,8 +8,15 @@ import com.group1.quiz.enums.OrderEnum;
 import com.group1.quiz.enums.UserOrderByEnum;
 import com.group1.quiz.enums.UserRoleEnum;
 import com.group1.quiz.model.LoginModel;
+import com.group1.quiz.model.PlayModel;
+import com.group1.quiz.model.QuestionModel;
+import com.group1.quiz.model.QuizModel;
 import com.group1.quiz.model.UserModel;
+import com.group1.quiz.repository.AnswerRepository;
 import com.group1.quiz.repository.LoginRepository;
+import com.group1.quiz.repository.PlayRepository;
+import com.group1.quiz.repository.QuestionRepository;
+import com.group1.quiz.repository.QuizRepository;
 import com.group1.quiz.repository.UserRepository;
 import com.group1.quiz.util.ResponseStatusException;
 import com.group1.quiz.util.TableQueryBuilder;
@@ -39,6 +46,10 @@ public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
     private final MongoTemplate mongoTemplate;
     private final LoginRepository loginRepository;
+    private final PlayRepository playRepository;
+    private final QuizRepository quizRepository;
+    private final QuestionRepository questionRepository;
+    private final AnswerRepository answerRepository;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -75,19 +86,19 @@ public class UserService implements UserDetailsService {
         List<UserModel> AllEmail = userRepository.findAllByEmail(userDto.getEmail());
 
         for(UserModel user : AllUsername) {
-            if(Objects.equals(user.getId(), id)) {
+            if(user.getId().equals(id)) {
                 continue;
             }
-            if(Objects.equals(user.getUsername(), userDto.getUsername())) {
+            if(user.getUsername().equals(userDto.getUsername())) {
                 throw new ResponseStatusException("Username already exists", HttpStatus.BAD_REQUEST);
             }
         }
 
         for(UserModel user : AllEmail) {
-            if(Objects.equals(user.getId(), id)) {
+            if(user.getId().equals(id)) {
                 continue;
             }
-            if(Objects.equals(user.getEmail(), userDto.getEmail())) {
+            if(user.getEmail().equals(userDto.getEmail())) {
                 throw new ResponseStatusException("Email already exists", HttpStatus.BAD_REQUEST);
             }
         }
@@ -95,10 +106,19 @@ public class UserService implements UserDetailsService {
         if(userModel.isPresent()) {
             UserModel user = userMapping(userModel.get(), userDto);
             userRepository.save(user);
+
+            List<PlayModel> playModels = playRepository.findByUsername(user.getUsername());
+            List<PlayModel> playModelsUpdate = playModels.stream().map(e->this.updatePlayUsername(e, user.getUsername())).toList();
+            playRepository.saveAll(playModelsUpdate);
         }
         else {
             throw new ResponseStatusException("User not found", HttpStatus.NOT_FOUND);
         }
+    }
+
+    private PlayModel updatePlayUsername (PlayModel playModel, String usernanme) {
+        playModel.setUsername(usernanme);
+        return playModel;
     }
 
     private UserModel userMapping(UserModel userModel, UserRequest userDto) {
@@ -126,7 +146,29 @@ public class UserService implements UserDetailsService {
     }
 
     public void deleteUser(String id) throws ResponseStatusException {
-        if(userRepository.existsById(id)) {
+        Optional<UserModel> userModel = userRepository.findById(id);
+        if(userModel.isPresent()) {
+            // delete all user played other quiz by username
+            playRepository.deleteAllByUsername(userModel.get().getUsername());
+
+            // find all quizzes to delete questions
+            List<QuizModel> quizModels = quizRepository.findByUserId(userModel.get().getId());
+            for(QuizModel quizModel : quizModels) {
+                // delete other  record played this quiz (created by this deleted user)
+                playRepository.deleteAllByQuizId(quizModel.getId());
+
+                // find all questions to delete answers
+                List<QuestionModel> questionModels = questionRepository.findByQuizId(quizModel.getId());
+                for(QuestionModel questionModel : questionModels) {
+                    //delete all answer related to this each question
+                    answerRepository.deleteAllByQuestionId(questionModel.getId());
+                }
+                // delete all questions related to each quiz
+                questionRepository.deleteByQuizId(quizModel.getId());
+            }
+            // delete all quiz
+            quizRepository.deleteByUserId(userModel.get().getId());
+            //delete user last
             userRepository.deleteById(id);
         }
         else {

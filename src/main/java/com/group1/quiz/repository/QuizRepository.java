@@ -9,4 +9,6 @@ public interface QuizRepository extends MongoRepository<QuizModel, String> {
     List<QuizModel> findByUserId(String userId);
     @Query(value = "{}", count = true)
     Long countAllDocuments();
+
+    void deleteByUserId(String userId);
 }
