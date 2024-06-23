@@ -5,6 +5,7 @@ import com.group1.quiz.dataTransferObject.AnswerDTO.UpdateAnswerRequest;
 import com.group1.quiz.model.AnswerModel;
 import com.group1.quiz.service.AnswerService;
 import com.group1.quiz.util.ResponseStatusException;
+import java.security.Principal;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -25,10 +26,10 @@ public class AnswerController {
     private final AnswerService answerService;
 
     @PostMapping("/create")
-    public ResponseEntity<?> createAnswer(@RequestBody CreateAnswerRequest createAnswerRequest) {
+    public ResponseEntity<?> createAnswer(@RequestBody CreateAnswerRequest createAnswerRequest, Principal principal) {
         AnswerModel answerModel;
         try {
-            answerModel = answerService.createAnswer(createAnswerRequest);
+            answerModel = answerService.createAnswer(createAnswerRequest, principal);
         } catch (ResponseStatusException e) {
             log.info(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), e.getCode());
@@ -40,9 +41,9 @@ public class AnswerController {
     }
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<?> updateAnswer(@PathVariable String id, @RequestBody UpdateAnswerRequest updateAnswerRequest) {
+    public ResponseEntity<?> updateAnswer(@PathVariable String id, @RequestBody UpdateAnswerRequest updateAnswerRequest, Principal principal) {
         try {
-            answerService.updateAnswer(id, updateAnswerRequest);
+            answerService.updateAnswer(id, updateAnswerRequest, principal);
         } catch (ResponseStatusException e) {
             log.info(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), e.getCode());
@@ -54,9 +55,9 @@ public class AnswerController {
     }
 
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<?> deleteAnswer(@PathVariable String id) {
+    public ResponseEntity<?> deleteAnswer(@PathVariable String id, Principal principal) {
         try {
-            answerService.deleteAnswer(id);
+            answerService.deleteAnswer(id, principal);
         } catch (ResponseStatusException e) {
             log.info(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), e.getCode());

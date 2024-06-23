@@ -12,6 +12,7 @@ public class PlaysResponse {
     private String id;
     private double score;
     private String quizId;
+    private String quizName;
     private Date createdAt;
     private Date updatedAt;
 }

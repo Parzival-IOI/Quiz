@@ -8,6 +8,7 @@ import com.group1.quiz.dataTransferObject.QuestionDTO.UpdateQuestionRequest;
 import com.group1.quiz.model.QuestionModel;
 import com.group1.quiz.service.QuestionService;
 import com.group1.quiz.util.ResponseStatusException;
+import java.security.Principal;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -30,10 +31,10 @@ public class QuestionController {
     private final QuestionService questionService;
 
     @GetMapping("/findQNA/{id}")
-    public ResponseEntity<?> findQNA(@PathVariable String id) {
+    public ResponseEntity<?> findQNA(@PathVariable String id, Principal principal) {
         QuestionResponse questionResponse;
         try {
-            questionResponse = questionService.findQNA(id);
+            questionResponse = questionService.findQNA(id, principal);
         } catch (ResponseStatusException e) {
             log.info(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), e.getCode());
@@ -45,10 +46,10 @@ public class QuestionController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<?> createQuestion(@RequestBody CreateQuestionRequest createQuestionRequest) {
+    public ResponseEntity<?> createQuestion(@RequestBody CreateQuestionRequest createQuestionRequest, Principal principal) {
         QuestionModel questionModel;
         try {
-            questionModel = questionService.createQuestion(createQuestionRequest);
+            questionModel = questionService.createQuestion(createQuestionRequest, principal);
         } catch (ResponseStatusException e) {
             log.info(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), e.getCode());
@@ -60,9 +61,9 @@ public class QuestionController {
     }
 
     @PostMapping("/createQNA")
-    public ResponseEntity<?> createQuestionAndAnswer(@RequestBody CreateQuestionAndAnswerRequest createQuestionAndAnswerRequest) {
+    public ResponseEntity<?> createQuestionAndAnswer(@RequestBody CreateQuestionAndAnswerRequest createQuestionAndAnswerRequest, Principal principal) {
         try {
-            questionService.createQuestionAndAnswer(createQuestionAndAnswerRequest);
+            questionService.createQuestionAndAnswer(createQuestionAndAnswerRequest, principal);
         } catch (ResponseStatusException e) {
             log.info(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), e.getCode());
@@ -74,9 +75,9 @@ public class QuestionController {
     }
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<?> updateQuestion(@PathVariable String id, @RequestBody UpdateQuestionRequest updateQuestionRequest) {
+    public ResponseEntity<?> updateQuestion(@PathVariable String id, @RequestBody UpdateQuestionRequest updateQuestionRequest, Principal principal) {
         try {
-            questionService.updateQuestion(id, updateQuestionRequest);
+            questionService.updateQuestion(id, updateQuestionRequest, principal);
         } catch (ResponseStatusException e) {
             log.info(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), e.getCode());
@@ -88,9 +89,9 @@ public class QuestionController {
     }
 
     @PutMapping("/updateQNA/{id}")
-    public ResponseEntity<?> updateQNA(@PathVariable String id, @RequestBody UpdateQNARequest updateQNARequest) {
+    public ResponseEntity<?> updateQNA(@PathVariable String id, @RequestBody UpdateQNARequest updateQNARequest, Principal principal) {
         try {
-            questionService.updateQNA(id, updateQNARequest);
+            questionService.updateQNA(id, updateQNARequest, principal);
         } catch (ResponseStatusException e) {
             log.info(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), e.getCode());
@@ -102,9 +103,9 @@ public class QuestionController {
     }
 
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<?> deleteQuestion(@PathVariable String id) {
+    public ResponseEntity<?> deleteQuestion(@PathVariable String id, Principal principal) {
         try {
-            questionService.deleteQuestion(id);
+            questionService.deleteQuestion(id, principal);
         } catch (ResponseStatusException e) {
             log.info(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), e.getCode());

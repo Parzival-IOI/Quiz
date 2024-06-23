@@ -14,11 +14,13 @@ import com.group1.quiz.dataTransferObject.TableResponse;
 import com.group1.quiz.dataTransferObject.QuizDTO.QuizzesResponse;
 import com.group1.quiz.enums.UserRoleEnum;
 import com.group1.quiz.model.AnswerModel;
+import com.group1.quiz.model.PlayModel;
 import com.group1.quiz.model.QuestionModel;
 import com.group1.quiz.model.QuizModel;
 import com.group1.quiz.enums.QuizVisibilityEnum;
 import com.group1.quiz.model.UserModel;
 import com.group1.quiz.repository.AnswerRepository;
+import com.group1.quiz.repository.PlayRepository;
 import com.group1.quiz.repository.QuestionRepository;
 import com.group1.quiz.repository.QuizRepository;
 import com.group1.quiz.repository.UserRepository;
@@ -30,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import javax.swing.text.html.Option;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -44,6 +47,7 @@ public class QuizService {
     private final QuestionRepository questionRepository;
     private final AnswerRepository answerRepository;
     private final MongoTemplate mongoTemplate;
+    private final PlayRepository playRepository;
 
     public List<QuizzesResponse> getSelfQuiz(Principal principal) throws Exception {
         Optional<UserModel> userModel = userRepository.findUserByUsername(principal.getName());
@@ -204,31 +208,70 @@ public class QuizService {
 
     }
 
-    public void updateQuiz(String id, UpdateQuizRequest updateQuizRequest) throws Exception {
-        Optional<QuizModel> quizModel = quizRepository.findById(id);
-        if(quizModel.isPresent()) {
-            QuizModel quiz = QuizModel.builder()
-                    .id(quizModel.get().getId())
-                    .name(updateQuizRequest.getName())
-                    .description(updateQuizRequest.getDescription())
-                    .visibility(updateQuizRequest.getVisibility())
-                    .userId(quizModel.get().getUserId())
-                    .createdAt(quizModel.get().getCreatedAt())
-                    .updatedAt(Date.from(Instant.now()))
-                    .build();
-            quizRepository.save(quiz);
+    public void updateQuiz(String id, UpdateQuizRequest updateQuizRequest, Principal principal) throws Exception {
+        Optional<UserModel> userModel = userRepository.findUserByUsername(principal.getName());
+        if(userModel.isPresent()) {
+            Optional<QuizModel> quizModel = quizRepository.findById(id);
+            if (quizModel.isPresent()) {
+                if (quizModel.get().getUserId().equals(userModel.get().getId()) || userModel.get().getRole().equals(UserRoleEnum.ADMIN)) {
+                    QuizModel quiz = QuizModel.builder()
+                            .id(quizModel.get().getId())
+                            .name(updateQuizRequest.getName())
+                            .description(updateQuizRequest.getDescription())
+                            .visibility(updateQuizRequest.getVisibility())
+                            .userId(quizModel.get().getUserId())
+                            .createdAt(quizModel.get().getCreatedAt())
+                            .updatedAt(Date.from(Instant.now()))
+                            .build();
+                    quizRepository.save(quiz);
+
+                    List<PlayModel> playModels = playRepository.findByQuizId(quizModel.get().getId());
+                    List<PlayModel> playModelsUpdate = playModels.stream().map(e -> this.UpdatePlayQuizName(e, quizModel.get().getName())).toList();
+                    playRepository.saveAll(playModelsUpdate);
+                } else {
+                    throw new ResponseStatusException("Permission Denied", HttpStatus.FORBIDDEN);
+                }
+            } else {
+                throw new ResponseStatusException("Quiz Not Found", HttpStatus.NOT_FOUND);
+            }
         }
         else {
-            throw new ResponseStatusException("Quiz Not Found", HttpStatus.NOT_FOUND);
+            throw new ResponseStatusException("User not found", HttpStatus.NOT_FOUND);
         }
     }
 
-    public void deleteQuiz(String id) throws Exception {
-        if(quizRepository.existsById(id)) {
-            quizRepository.deleteById(id);
-        }
-        else {
-            throw new ResponseStatusException("Quiz Not Found", HttpStatus.NOT_FOUND);
+    private PlayModel UpdatePlayQuizName(PlayModel playModel, String quizName) {
+        playModel.setQuizName(quizName);
+        return playModel;
+    }
+
+    public void deleteQuiz(String id, Principal principal) throws Exception {
+        Optional<UserModel> userModel = userRepository.findUserByUsername(principal.getName());
+        if(userModel.isPresent()) {
+            Optional<QuizModel> quizModel = quizRepository.findById(id);
+            if (quizModel.isPresent()) {
+                // only Allow owner of quiz or admin
+                if (quizModel.get().getUserId().equals(userModel.get().getId()) || userModel.get().getRole().equals(UserRoleEnum.ADMIN)) {
+                    // delete all ( answers, questions, quiz, play)
+                    List<PlayModel> playModels = playRepository.findByQuizId(id);
+                    playRepository.deleteAll(playModels);
+                    List<QuestionModel> questionModels = questionRepository.findByQuizId(id);
+                    for (QuestionModel questionModel : questionModels) {
+                        List<AnswerModel> answerModels = answerRepository.findByQuestionId(questionModel.getId());
+                        answerRepository.deleteAll(answerModels);
+                    }
+                    questionRepository.deleteAll(questionModels);
+                    quizRepository.deleteById(id);
+                }
+                else {
+                    throw new ResponseStatusException("Permission Denied", HttpStatus.FORBIDDEN);
+                }
+            }
+            else {
+                throw new ResponseStatusException("Quiz Not Found", HttpStatus.NOT_FOUND);
+            }
+        } else {
+            throw new ResponseStatusException("User not found", HttpStatus.NOT_FOUND);
         }
     }
 }

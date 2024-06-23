@@ -97,9 +97,9 @@ public class QuizController {
     }
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<?> updateQuiz(@PathVariable String id, @RequestBody UpdateQuizRequest updateQuizRequest) {
+    public ResponseEntity<?> updateQuiz(@PathVariable String id, @RequestBody UpdateQuizRequest updateQuizRequest, Principal principal) {
         try {
-            quizService.updateQuiz(id, updateQuizRequest);
+            quizService.updateQuiz(id, updateQuizRequest, principal);
         } catch (ResponseStatusException e) {
             log.info(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), e.getCode());
@@ -111,9 +111,9 @@ public class QuizController {
     }
 
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<?> deleteQuiz(@PathVariable String id) {
+    public ResponseEntity<?> deleteQuiz(@PathVariable String id, Principal principal) {
         try {
-            quizService.deleteQuiz(id);
+            quizService.deleteQuiz(id, principal);
         } catch (ResponseStatusException e) {
             log.info(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), e.getCode());

@@ -94,7 +94,8 @@ public class PlayService {
     public int playQuizSummit(PlayQuizRequest playQuizRequest, Principal principal) throws Exception {
         int point = 0;
         Optional<UserModel> userModel = userRepository.findUserByUsername(principal.getName());
-        if (quizRepository.existsById(playQuizRequest.getId()) && userModel.isPresent()) {
+        Optional<QuizModel> quizModel = quizRepository.findById(playQuizRequest.getId());
+        if (quizModel.isPresent() && userModel.isPresent()) {
             List<PlayQuestionRequest> questionRequests = playQuizRequest.getQuestions();
             for (PlayQuestionRequest questionRequest : questionRequests) {
                 Optional<QuestionModel> questionModel = questionRepository.findById(questionRequest.getQuestionId());
@@ -121,10 +122,12 @@ public class PlayService {
             if(playModel != null) {
                 playRepository.save(
                         PlayModel.builder()
-                                .id(playQuizRequest.getId())
+                                .id(playModel.getId())
                                 .score(point)
                                 .userId(userModel.get().getId())
                                 .quizId(playQuizRequest.getId())
+                                .quizName(quizModel.get().getName())
+                                .answers(playQuizRequest.getQuestions())
                                 .createdAt(Date.from(Instant.now()))
                                 .updatedAt(Date.from(Instant.now()))
                                 .build()
@@ -136,6 +139,8 @@ public class PlayService {
                                 .score(point)
                                 .userId(userModel.get().getId())
                                 .quizId(playQuizRequest.getId())
+                                .quizName(quizModel.get().getName())
+                                .answers(playQuizRequest.getQuestions())
                                 .createdAt(Date.from(Instant.now()))
                                 .updatedAt(Date.from(Instant.now()))
                                 .build()
@@ -153,12 +158,12 @@ public class PlayService {
         Optional<PlayModel> playModel = playRepository.findById(id);
         Optional<UserModel> userModel = userRepository.findUserByUsername(principal.getName());
         if(playModel.isPresent() && userModel.isPresent()) {
-            if(playModel.get().getUserId().equals(userModel.get().getId()))
+            if(playModel.get().getUserId().equals(userModel.get().getId()) || userModel.get().getRole().equals(UserRoleEnum.ADMIN))
                 return playResponseMapping(playModel.get());
             throw new ResponseStatusException("Permission Denied", HttpStatus.BAD_REQUEST);
         }
         else {
-            throw new ResponseStatusException("Play Not Found", HttpStatus.NOT_FOUND);
+            throw new ResponseStatusException("Play/User Not Found", HttpStatus.NOT_FOUND);
         }
     }
 
@@ -166,7 +171,9 @@ public class PlayService {
         return PlayResponse.builder()
                 .id(playModel.getId())
                 .score(playModel.getScore())
+                .answers(playModel.getAnswers())
                 .quizId(playModel.getQuizId())
+                .quizName(playModel.getQuizName())
                 .createdAt(playModel.getCreatedAt())
                 .updatedAt(playModel.getUpdatedAt())
                 .build();
@@ -177,9 +184,11 @@ public class PlayService {
         if(userModel.isPresent()) {
             if (userModel.get().getId().equals(UserRoleEnum.ADMIN.getValue()))
                 throw new ResponseStatusException("Permission Denied", HttpStatus.FORBIDDEN);
+        } else {
+            throw new ResponseStatusException("User Not Found", HttpStatus.NOT_FOUND);
         }
         long count;
-        TableQueryBuilder tableQueryBuilder = new TableQueryBuilder(search, "userId", orderBy.getValue(), order, page, size);
+        TableQueryBuilder tableQueryBuilder = new TableQueryBuilder(search, "quizName", orderBy.getValue(), order, page, size);
 
         List<PlayModel> playModels = mongoTemplate.find(tableQueryBuilder.getQuery(), PlayModel.class);
 
@@ -199,6 +208,7 @@ public class PlayService {
                 .id(playModel.getId())
                 .score(playModel.getScore())
                 .quizId(playModel.getQuizId())
+                .quizName(playModel.getQuizName())
                 .createdAt(playModel.getCreatedAt())
                 .updatedAt(playModel.getUpdatedAt())
                 .build();
@@ -213,7 +223,7 @@ public class PlayService {
         Query query = new Query();
         query.addCriteria(Criteria.where("userId").is(userModel.get().getId()));
         if(!StringUtils.isEmpty(search)) {
-            query.addCriteria(Criteria.where("name").regex(".*"+search+".*", "i"));
+            query.addCriteria(Criteria.where("quizName").regex(".*"+search+".*", "i"));
         }
         if(order.equals(OrderEnum.DESC)) {
             query.with(Sort.by(Sort.Direction.DESC, orderBy.getValue()));
