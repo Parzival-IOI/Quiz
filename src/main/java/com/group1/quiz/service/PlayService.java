@@ -124,8 +124,10 @@ public class PlayService {
                     }
                     Optional<AnswerModel> answerModel = answerRepository.findById(questionRequest.getAnswerId());
                     if(answerModel.isPresent()) {
-                        if(answerModel.get().isCorrect()) {
-                            point++;
+                        if(questionModel.get().getId().equals(answerModel.get().getQuestionId())) {
+                            if(answerModel.get().isCorrect()) {
+                                point++;
+                            }
                         }
                     }
                 }

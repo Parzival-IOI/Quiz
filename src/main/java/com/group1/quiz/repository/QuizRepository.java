@@ -10,5 +10,7 @@ public interface QuizRepository extends MongoRepository<QuizModel, String> {
     @Query(value = "{}", count = true)
     Long countAllDocuments();
 
+    List<QuizModel> findAllByUserId(String userId);
+
     void deleteByUserId(String userId);
 }

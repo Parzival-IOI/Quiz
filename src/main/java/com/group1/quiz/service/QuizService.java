@@ -3,11 +3,13 @@ package com.group1.quiz.service;
 
 import com.group1.quiz.dataTransferObject.AnswerDTO.AnswerRequest;
 import com.group1.quiz.dataTransferObject.AnswerDTO.AnswerResponse;
+import com.group1.quiz.dataTransferObject.PlayDTO.PlaysResponse;
 import com.group1.quiz.dataTransferObject.QuestionDTO.QuestionResponse;
 import com.group1.quiz.dataTransferObject.QuizDTO.CreateQuizRequest;
 import com.group1.quiz.dataTransferObject.QuestionDTO.QuestionRequest;
 import com.group1.quiz.dataTransferObject.QuizDTO.UpdateQuizRequest;
 import com.group1.quiz.enums.OrderEnum;
+import com.group1.quiz.enums.PlayOrderByEnum;
 import com.group1.quiz.enums.QuizOrderByEnum;
 import com.group1.quiz.dataTransferObject.QuizDTO.QuizResponse;
 import com.group1.quiz.dataTransferObject.TableResponse;
@@ -35,7 +37,11 @@ import java.util.Optional;
 import javax.swing.text.html.Option;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -273,5 +279,82 @@ public class QuizService {
         } else {
             throw new ResponseStatusException("User not found", HttpStatus.NOT_FOUND);
         }
+    }
+
+    public TableResponse<QuizzesResponse> getSelfQuiz2(QuizOrderByEnum orderBy, OrderEnum order, int page, int size, String search, Principal principal) throws Exception {
+        long count;
+        Optional<UserModel> userModel = userRepository.findUserByUsername(principal.getName());
+        if(userModel.isEmpty()) {
+            throw new ResponseStatusException("Permission Denied", HttpStatus.FORBIDDEN);
+        }
+
+        Query query = new Query();
+        query.addCriteria(Criteria.where("userId").is(userModel.get().getId()));
+        if(!StringUtils.isEmpty(search)) {
+            query.addCriteria(Criteria.where("name").regex(".*"+search+".*", "i"));
+        }
+        if(order.equals(OrderEnum.DESC)) {
+            query.with(Sort.by(Sort.Direction.DESC, orderBy.getValue()));
+        } else if(order.equals(OrderEnum.ASC)) {
+            query.with(Sort.by(Sort.Direction.ASC, orderBy.getValue()));
+        }
+        query.with(PageRequest.of(page, size));
+
+        List<QuizModel> quizModels = mongoTemplate.find(query, QuizModel.class);
+
+        if (!StringUtils.isEmpty(search)) {
+            count = quizModels.size();
+        } else {
+            count = quizRepository.findAllByUserId(userModel.get().getId()).size();
+        }
+        return TableResponse.<QuizzesResponse>builder()
+                .data(quizModels.stream().map(this::quizResponseMapping).toList())
+                .columns(count)
+                .build();
+    }
+
+    public TableResponse<PlaysResponse> getSelfQuizPlayer(PlayOrderByEnum orderBy, OrderEnum order, int page, int size, String search, String quizId, Principal principal) throws Exception {
+        if(quizId.isEmpty())
+            throw new ResponseStatusException("Quiz Id Required", HttpStatus.BAD_REQUEST);
+
+        long count;
+        Optional<UserModel> userModel = userRepository.findUserByUsername(principal.getName());
+        if(userModel.isEmpty()) {
+            throw new ResponseStatusException("Permission Denied", HttpStatus.FORBIDDEN);
+        }
+        Query query = new Query();
+        query.addCriteria(Criteria.where("quizId").is(quizId));
+        if(!StringUtils.isEmpty(search)) {
+            query.addCriteria(Criteria.where("username").regex(".*"+search+".*", "i"));
+        }
+        if(order.equals(OrderEnum.DESC)) {
+            query.with(Sort.by(Sort.Direction.DESC, orderBy.getValue()));
+        } else if(order.equals(OrderEnum.ASC)) {
+            query.with(Sort.by(Sort.Direction.ASC, orderBy.getValue()));
+        }
+        query.with(PageRequest.of(page, size));
+
+        List<PlayModel> playModels = mongoTemplate.find(query, PlayModel.class);
+
+        if (!StringUtils.isEmpty(search)) {
+            count = playModels.size();
+        } else {
+            count = playRepository.countAllDocuments();
+        }
+        return TableResponse.<PlaysResponse>builder()
+                .data(playModels.stream().map(this::playsResponseMapping).toList())
+                .columns(count)
+                .build();
+    }
+
+    private PlaysResponse playsResponseMapping(PlayModel playModel) {
+        return PlaysResponse.builder()
+                .id(playModel.getId())
+                .score(playModel.getScore())
+                .quizId(playModel.getQuizId())
+                .quizName(playModel.getQuizName())
+                .createdAt(playModel.getCreatedAt())
+                .updatedAt(playModel.getUpdatedAt())
+                .build();
     }
 }
