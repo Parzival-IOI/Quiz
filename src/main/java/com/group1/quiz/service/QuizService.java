@@ -3,6 +3,7 @@ package com.group1.quiz.service;
 
 import com.group1.quiz.dataTransferObject.AnswerDTO.AnswerRequest;
 import com.group1.quiz.dataTransferObject.AnswerDTO.AnswerResponse;
+import com.group1.quiz.dataTransferObject.PlayDTO.PlaysPlayerResponse;
 import com.group1.quiz.dataTransferObject.PlayDTO.PlaysResponse;
 import com.group1.quiz.dataTransferObject.QuestionDTO.QuestionResponse;
 import com.group1.quiz.dataTransferObject.QuizDTO.CreateQuizRequest;
@@ -313,7 +314,7 @@ public class QuizService {
                 .build();
     }
 
-    public TableResponse<PlaysResponse> getSelfQuizPlayer(PlayOrderByEnum orderBy, OrderEnum order, int page, int size, String search, String quizId, Principal principal) throws Exception {
+    public TableResponse<PlaysPlayerResponse> getSelfQuizPlayer(PlayOrderByEnum orderBy, OrderEnum order, int page, int size, String search, String quizId, Principal principal) throws Exception {
         if(quizId.isEmpty())
             throw new ResponseStatusException("Quiz Id Required", HttpStatus.BAD_REQUEST);
 
@@ -341,18 +342,19 @@ public class QuizService {
         } else {
             count = playRepository.countAllDocuments();
         }
-        return TableResponse.<PlaysResponse>builder()
+        return TableResponse.<PlaysPlayerResponse>builder()
                 .data(playModels.stream().map(this::playsResponseMapping).toList())
                 .columns(count)
                 .build();
     }
 
-    private PlaysResponse playsResponseMapping(PlayModel playModel) {
-        return PlaysResponse.builder()
+    private PlaysPlayerResponse playsResponseMapping(PlayModel playModel) {
+        return PlaysPlayerResponse.builder()
                 .id(playModel.getId())
                 .score(playModel.getScore())
                 .quizId(playModel.getQuizId())
                 .quizName(playModel.getQuizName())
+                .username(playModel.getUsername())
                 .createdAt(playModel.getCreatedAt())
                 .updatedAt(playModel.getUpdatedAt())
                 .build();

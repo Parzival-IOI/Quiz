@@ -1,5 +1,6 @@
 package com.group1.quiz.controller;
 
+import com.group1.quiz.dataTransferObject.PlayDTO.PlaysPlayerResponse;
 import com.group1.quiz.dataTransferObject.PlayDTO.PlaysResponse;
 import com.group1.quiz.dataTransferObject.QuizDTO.UpdateQuizRequest;
 import com.group1.quiz.enums.OrderEnum;
@@ -70,7 +71,7 @@ public class QuizController {
 
     @GetMapping("/myQuiz/player")
     public ResponseEntity<?> getSelfQuizPlayer(@RequestParam(required=false) String search, @RequestParam PlayOrderByEnum orderBy, @RequestParam OrderEnum order, @RequestParam int page, @RequestParam RowLengthEnum size, @RequestParam String quizId, Principal principal) {
-        TableResponse<PlaysResponse> tableResponse;
+        TableResponse<PlaysPlayerResponse> tableResponse;
         try {
             tableResponse = quizService.getSelfQuizPlayer(orderBy, order, page, size.getValue(), search, quizId, principal);
         } catch (ResponseStatusException e) {

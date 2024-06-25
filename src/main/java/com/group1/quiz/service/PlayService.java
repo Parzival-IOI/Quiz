@@ -179,7 +179,11 @@ public class PlayService {
         Optional<PlayModel> playModel = playRepository.findById(id);
         Optional<UserModel> userModel = userRepository.findUserByUsername(principal.getName());
         if(playModel.isPresent() && userModel.isPresent()) {
-            if(playModel.get().getUsername().equals(userModel.get().getUsername()) || userModel.get().getRole().equals(UserRoleEnum.ADMIN))
+            Optional<QuizModel> quizModel = quizRepository.findById(playModel.get().getQuizId());
+            if(quizModel.isEmpty()) {
+                throw new ResponseStatusException("Quiz Not Found", HttpStatus.NOT_FOUND);
+            }
+            if(playModel.get().getUsername().equals(userModel.get().getUsername()) || quizModel.get().getUserId().equals(userModel.get().getId()) || userModel.get().getRole().equals(UserRoleEnum.ADMIN))
                 return playResponseMapping(playModel.get());
             throw new ResponseStatusException("Permission Denied", HttpStatus.BAD_REQUEST);
         }
