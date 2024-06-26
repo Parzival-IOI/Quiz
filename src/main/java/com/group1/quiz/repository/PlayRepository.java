@@ -13,6 +13,10 @@ public interface PlayRepository extends MongoRepository<PlayModel, String> {
 
     List<PlayModel> findByUsername(String username);
 
+    List<PlayModel> findAllByQuizId(String quizId);
+
+    List<PlayModel> findAllByUsername(String username);
+
     void deleteAllByUsername(String username);
 
     void deleteAllByQuizId(String quizId);

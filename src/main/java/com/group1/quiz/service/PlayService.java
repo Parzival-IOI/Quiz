@@ -291,7 +291,7 @@ public class PlayService {
                     .addCriteria(Criteria.where("quizName").regex(".*"+search+".*", "i"));
             count = mongoTemplate.find(querySearch, PlayModel.class).size();
         } else {
-            count = playRepository.countAllDocuments();
+            count = playRepository.findAllByUsername(userModel.get().getUsername()).size();
         }
         return TableResponse.<PlaysResponse>builder()
                 .data(playModels.stream().map(this::playsResponseMapping).toList())
