@@ -31,6 +31,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -183,7 +185,8 @@ public class UserService implements UserDetailsService {
         List<UserModel> userModels = mongoTemplate.find(tableQueryBuilder.getQuery(), UserModel.class);
 
         if (!StringUtils.isEmpty(search)) {
-            count = userModels.size();
+            Query query = Query.query(Criteria.where("username").regex(".*"+search+".*", "i"));
+            count = mongoTemplate.find(query, UserModel.class).size();
         } else {
             count = userRepository.countAllDocuments();
         }

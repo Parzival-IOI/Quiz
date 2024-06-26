@@ -244,7 +244,8 @@ public class PlayService {
         List<PlayModel> playModels = mongoTemplate.find(tableQueryBuilder.getQuery(), PlayModel.class);
 
         if (!StringUtils.isEmpty(search)) {
-            count = playModels.size();
+            Query query = Query.query(Criteria.where("username").regex(".*"+search+".*", "i"));
+            count = mongoTemplate.find(query, PlayModel.class).size();
         } else {
             count = playRepository.countAllDocuments();
         }
@@ -286,7 +287,8 @@ public class PlayService {
         List<PlayModel> playModels = mongoTemplate.find(query, PlayModel.class);
 
         if (!StringUtils.isEmpty(search)) {
-            count = playModels.size();
+            Query querySearch = Query.query(Criteria.where("username").regex(".*"+search+".*", "i"));
+            count = mongoTemplate.find(querySearch, PlayModel.class).size();
         } else {
             count = playRepository.countAllDocuments();
         }

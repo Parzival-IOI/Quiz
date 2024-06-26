@@ -77,7 +77,8 @@ public class QuizService {
         List<QuizModel> quizModels = mongoTemplate.find(tableQueryBuilder.getQuery(), QuizModel.class);
 
         if (!StringUtils.isEmpty(search)) {
-            count = quizModels.size();
+            Query query = Query.query(Criteria.where("name").regex(".*"+search+".*", "i"));
+            count = mongoTemplate.find(query, QuizModel.class).size();
         } else {
             count = quizRepository.countAllDocuments();
         }
