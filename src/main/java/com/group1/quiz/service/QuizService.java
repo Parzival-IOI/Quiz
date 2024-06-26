@@ -4,7 +4,6 @@ package com.group1.quiz.service;
 import com.group1.quiz.dataTransferObject.AnswerDTO.AnswerRequest;
 import com.group1.quiz.dataTransferObject.AnswerDTO.AnswerResponse;
 import com.group1.quiz.dataTransferObject.PlayDTO.PlaysPlayerResponse;
-import com.group1.quiz.dataTransferObject.PlayDTO.PlaysResponse;
 import com.group1.quiz.dataTransferObject.QuestionDTO.QuestionResponse;
 import com.group1.quiz.dataTransferObject.QuizDTO.CreateQuizRequest;
 import com.group1.quiz.dataTransferObject.QuestionDTO.QuestionRequest;
@@ -35,7 +34,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-import javax.swing.text.html.Option;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.PageRequest;
@@ -305,7 +303,9 @@ public class QuizService {
         List<QuizModel> quizModels = mongoTemplate.find(query, QuizModel.class);
 
         if (!StringUtils.isEmpty(search)) {
-            count = quizModels.size();
+            Query queryCount = new Query().query(Criteria.where("userId").is(userModel.get().getId()))
+                    .addCriteria(Criteria.where("name").regex(".*"+search+".*", "i"));
+            count = mongoTemplate.find(queryCount, QuizModel.class).size();
         } else {
             count = quizRepository.findAllByUserId(userModel.get().getId()).size();
         }
@@ -339,7 +339,9 @@ public class QuizService {
         List<PlayModel> playModels = mongoTemplate.find(query, PlayModel.class);
 
         if (!StringUtils.isEmpty(search)) {
-            count = playModels.size();
+            Query queryCount = new Query().query(Criteria.where("quizId").is(quizId))
+                    .addCriteria(Criteria.where("username").regex(".*"+search+".*", "i"));
+            count = mongoTemplate.find(queryCount, PlayModel.class).size();
         } else {
             count = playRepository.countAllDocuments();
         }
