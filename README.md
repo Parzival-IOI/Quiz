@@ -1,6 +1,6 @@
-# GETTING STARTED WITH QUIZ
+# GETTING STARTED WITH QUIZ APPLICATION
 
-### Setup Key for JWT Login
+## Setup Key for JWT Login
 + Open bash shell (recommended bash shell for openssl)
 + Run command for generating keypair.pem
 
@@ -13,7 +13,18 @@
       openssl pkcs8 -topk8 -inform PEM -nocrypt -in keypair.pem -out private.pem
 + After Complete you can copy private and public key to .env file
 
-### Setup Environment File
+## Setup Environment File
+
+#### Due to difficulty running spring boot application on docker, I decided to run the application on IDE and use Docker for MongoDB
+
+#### But the issue arise when running "docker-compose --build", where Mongo URI need to change from "localhost" to service name "mongo"
+
+#### So I decided to break the .env file into two separate files
++ **.env** for running the application on IDE and MongoDB on Docker
++ **.env.local** for running "docker-compose --build" (Multi Services Container)
+
+#### Mongo URI for .env = "mongodb://<(username)>:<(password)>@localhost:27017/"
+#### Mongo URI for .env.local = "mongodb://<(username)>:<(password)>@mongo:27017/"
 
 + .env  
 
@@ -21,12 +32,25 @@
       DATABASE= <Database Name>
       PUBLIC_KEY= <Generated Public Key>
       PRIVATE_KEY= <Generated Private Key>
+      EMAIL= <Email>
+      EMAIL_PASSKEY= <APP Password for the Email>
+
+
++ .env.local
+
+      MONGO_URI= <Mongo URI>
+      DATABASE= <Database Name>
+      PUBLIC_KEY= <Generated Public Key>
+      PRIVATE_KEY= <Generated Private Key>
+      EMAIL= <Email>
+      EMAIL_PASSKEY= <APP Password for the Email>
+
 
 
 
 > #### Note:
-> + please set up account on <https://www.mongodb.com>
-> + copy your mongoDB uri and replace with \<your mongodb atlas uri>
+> + Normal MongoDB URI Template : mongodb://<(username)>:<(password)>@localhost:27017/
+> + For .env.local MongoDB URI Template : mongodb://<(username)>:<(password)>@mongo:27017/
 
 
 

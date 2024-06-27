@@ -1,9 +1,11 @@
 package com.group1.quiz.model;
 
+import java.util.Date;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -19,9 +21,11 @@ public class LoginModel {
     private String id;
 
     @Indexed(unique = true)
-    @Field(name="userName")
     private String userName;
 
-    @Field(name="refreshToken")
     private String refreshToken;
+
+    @CreatedDate
+    @Indexed(name="createdAt", expireAfterSeconds = 3600)
+    private Date createdAt;
 }

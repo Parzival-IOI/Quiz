@@ -3,6 +3,7 @@ package com.group1.quiz.controller;
 
 import com.group1.quiz.dataTransferObject.AuthResponse;
 import com.group1.quiz.dataTransferObject.LoginRequest;
+import com.group1.quiz.dataTransferObject.OtpRequest;
 import com.group1.quiz.dataTransferObject.UserDTO.UserRegisterRequest;
 import com.group1.quiz.enums.UserRoleEnum;
 import com.group1.quiz.service.TokenService;
@@ -20,6 +21,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -81,6 +83,49 @@ public class AuthController {
     public ResponseEntity<?> registerUser(@RequestBody UserRegisterRequest userRegisterRequest) {
         try {
             userService.registerUser(userRegisterRequest);
+        } catch (ResponseStatusException e) {
+            log.info(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), e.getCode());
+        } catch (Exception e) {
+            log.info(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return new ResponseEntity<>("success", HttpStatus.OK);
+    }
+
+    @PostMapping("/v2/register")
+    public ResponseEntity<?> registerUserOtp(@RequestBody UserRegisterRequest userRegisterRequest) {
+        String email;
+        try {
+            email = userService.registerUserOtp(userRegisterRequest);
+        } catch (ResponseStatusException e) {
+            log.info(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), e.getCode());
+        } catch (Exception e) {
+            log.info(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return new ResponseEntity<>(email, HttpStatus.OK);
+    }
+
+    @PostMapping("/authenticateEmail")
+    public ResponseEntity<?> authenticateEmail(@RequestBody OtpRequest otp) {
+        try {
+            userService.authenticateEmail(otp);
+        } catch (ResponseStatusException e) {
+            log.info(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), e.getCode());
+        } catch (Exception e) {
+            log.info(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return new ResponseEntity<>("success", HttpStatus.OK);
+    }
+
+    @PostMapping("/resendOTP")
+    public ResponseEntity<?> resendOTP(@RequestBody OtpRequest otp) {
+        try {
+            userService.resendOTP(otp);
         } catch (ResponseStatusException e) {
             log.info(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), e.getCode());

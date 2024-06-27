@@ -64,11 +64,12 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authenticationManager(authenticationManager)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth", "/register").permitAll()
+                        .requestMatchers("/auth", "/register", "/v2/register", "/authenticateEmail", "/resendOTP").permitAll()
                         .requestMatchers("/migrate").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/refreshToken").hasRole("REFRESH_TOKEN")
                         .requestMatchers("/api/user/**").hasRole(UserRoleEnum.ADMIN.getValue())
+                        .requestMatchers("/api/mail/**").hasRole(UserRoleEnum.ADMIN.getValue())
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))

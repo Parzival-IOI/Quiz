@@ -1,5 +1,6 @@
 package com.group1.quiz.service;
 
+import com.group1.quiz.dataTransferObject.OtpRequest;
 import com.group1.quiz.dataTransferObject.TableResponse;
 import com.group1.quiz.dataTransferObject.UserDTO.UserRegisterRequest;
 import com.group1.quiz.dataTransferObject.UserDTO.UserRequest;
@@ -11,12 +12,14 @@ import com.group1.quiz.model.LoginModel;
 import com.group1.quiz.model.PlayModel;
 import com.group1.quiz.model.QuestionModel;
 import com.group1.quiz.model.QuizModel;
+import com.group1.quiz.model.RegisterModel;
 import com.group1.quiz.model.UserModel;
 import com.group1.quiz.repository.AnswerRepository;
 import com.group1.quiz.repository.LoginRepository;
 import com.group1.quiz.repository.PlayRepository;
 import com.group1.quiz.repository.QuestionRepository;
 import com.group1.quiz.repository.QuizRepository;
+import com.group1.quiz.repository.RegisterRepository;
 import com.group1.quiz.repository.UserRepository;
 import com.group1.quiz.util.ResponseStatusException;
 import com.group1.quiz.util.TableQueryBuilder;
@@ -26,7 +29,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import javax.swing.text.html.Option;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -52,6 +55,8 @@ public class UserService implements UserDetailsService {
     private final QuizRepository quizRepository;
     private final QuestionRepository questionRepository;
     private final AnswerRepository answerRepository;
+    private final MailService mailService;
+    private final RegisterRepository registerRepository;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -75,8 +80,6 @@ public class UserService implements UserDetailsService {
         UserModel userModel = new UserModel(userDto);
         String encodedPassword = new BCryptPasswordEncoder().encode(userModel.getPassword());
         userModel.setPassword(encodedPassword);
-        userModel.setCreatedAt(Date.from(Instant.now()));
-        userModel.setUpdatedAt(Date.from(Instant.now()));
         userRepository.insert(userModel);
     }
 
@@ -118,33 +121,20 @@ public class UserService implements UserDetailsService {
         }
     }
 
-    private PlayModel updatePlayUsername (PlayModel playModel, String usernanme) {
-        playModel.setUsername(usernanme);
+    private PlayModel updatePlayUsername (PlayModel playModel, String username) {
+        playModel.setUsername(username);
         return playModel;
     }
 
     private UserModel userMapping(UserModel userModel, UserRequest userDto) {
-
+        userModel.setUsername(userDto.getUsername());
+        userModel.setEmail(userDto.getEmail());
+        userModel.setRole(userDto.getRole());
         if(userDto.getPassword().isEmpty()) {
-            return UserModel.builder()
-                    .id(userModel.getId())
-                    .username(userDto.getUsername())
-                    .password(userModel.getPassword())
-                    .email(userDto.getEmail())
-                    .role(userDto.getRole())
-                    .createdAt(userModel.getCreatedAt())
-                    .updatedAt(Date.from(Instant.now()))
-                    .build() ;
+            return userModel;
         }
-        return UserModel.builder()
-                .id(userModel.getId())
-                .username(userDto.getUsername())
-                .password(new BCryptPasswordEncoder().encode(userDto.getPassword()))
-                .email(userDto.getEmail())
-                .role(userDto.getRole())
-                .createdAt(userModel.getCreatedAt())
-                .updatedAt(Date.from(Instant.now()))
-                .build() ;
+        userModel.setPassword(new BCryptPasswordEncoder().encode(userDto.getPassword()));
+        return userModel;
     }
 
     public void deleteUser(String id) throws ResponseStatusException {
@@ -225,7 +215,7 @@ public class UserService implements UserDetailsService {
     }
 
     public void registerUser(UserRegisterRequest userRegisterRequest) throws Exception {
-        if(userRepository.existsByUsername(userRegisterRequest.getUsername()) || userRepository.existsByEmail(userRegisterRequest.getEmail())) {
+        if (userRepository.existsByUsername(userRegisterRequest.getUsername()) || userRepository.existsByEmail(userRegisterRequest.getEmail())) {
             throw new ResponseStatusException("Username/Email already exists", HttpStatus.BAD_REQUEST);
         }
 
@@ -243,11 +233,54 @@ public class UserService implements UserDetailsService {
                 .password(new BCryptPasswordEncoder().encode(userRegisterRequest.getPassword()))
                 .email(userRegisterRequest.getEmail())
                 .role(role)
-                .createdAt(Date.from(Instant.now()))
-                .updatedAt(Date.from(Instant.now()))
                 .build();
 
         userRepository.save(user);
+    }
+
+    public String registerUserOtp(UserRegisterRequest userRegisterRequest) throws Exception {
+        if (userRepository.existsByUsername(userRegisterRequest.getUsername()) || userRepository.existsByEmail(userRegisterRequest.getEmail())) {
+            throw new ResponseStatusException("Username/Email already exists", HttpStatus.BAD_REQUEST);
+        }
+
+        UserRoleEnum role;
+        if(Objects.equals(userRegisterRequest.getRole().getValue(), UserRoleEnum.TEACHER.getValue())) {
+            role = UserRoleEnum.TEACHER;
+        } else if(Objects.equals(userRegisterRequest.getRole().getValue(), UserRoleEnum.STUDENT.getValue())) {
+            role = UserRoleEnum.STUDENT;
+        } else {
+            role = UserRoleEnum.STUDENT;
+        }
+
+        UserModel user = UserModel.builder()
+                .username(userRegisterRequest.getUsername())
+                .password(new BCryptPasswordEncoder().encode(userRegisterRequest.getPassword()))
+                .email(userRegisterRequest.getEmail())
+                .role(role)
+                .build();
+
+
+
+        Optional<RegisterModel> registerModel = registerRepository.findRegisterByUserEmail(userRegisterRequest.getEmail());
+
+        if (registerModel.isPresent()) {
+            registerModel.get().setUser(user);
+            registerRepository.save(registerModel.get());
+            return user.getEmail();
+        }
+
+        String otp = mailService.sendOTP(userRegisterRequest.getEmail().trim(), "Registration With Quiz Application");
+
+        registerRepository.insert(
+                RegisterModel.builder()
+                        .user(user)
+                        .otp(otp)
+                        .attempt((byte) 0)
+                        .resend((byte) 0)
+                        .build()
+        );
+
+        return user.getEmail();
     }
 
     public String getRole(Principal principal) throws Exception {
@@ -273,5 +306,64 @@ public class UserService implements UserDetailsService {
         else {
             throw new ResponseStatusException("User Not Found", HttpStatus.BAD_REQUEST);
         }
+    }
+
+    public void authenticateEmail(OtpRequest otp) throws Exception {
+        Optional<RegisterModel> registerModel = registerRepository.findRegisterByUserEmail(otp.getEmail());
+        if(registerModel.isPresent()) {
+            byte attempt = registerModel.get().getAttempt();
+            byte resend = registerModel.get().getResend();
+            if(attempt >= 5  || resend >= 5) {
+                throw new ResponseStatusException("Blocked", HttpStatus.FORBIDDEN);
+            }
+            Date updatedDate = registerModel.get().getUpdatedAt();
+            Date now = Date.from(Instant.now());
+            long time = now.getTime() - updatedDate.getTime();
+            long diff = TimeUnit.MINUTES.convert(time, TimeUnit.MILLISECONDS);
+            if(diff > 5) {
+                throw new ResponseStatusException("OTP is Out of Time", HttpStatus.BAD_REQUEST);
+            }
+
+            if(registerModel.get().getOtp().equals(otp.getOtp())) {
+                userRepository.insert(
+                        UserModel.builder()
+                                .username(registerModel.get().getUser().getUsername())
+                                .password(new BCryptPasswordEncoder().encode(registerModel.get().getUser().getPassword()))
+                                .email(registerModel.get().getUser().getEmail())
+                                .role(registerModel.get().getUser().getRole())
+                                .build()
+                );
+                registerRepository.deleteById(registerModel.get().getId());
+            }
+            else {
+                registerModel.get().setAttempt((byte) (attempt + 1));
+                registerRepository.save(registerModel.get());
+                throw new ResponseStatusException("Invalid OTP", HttpStatus.BAD_REQUEST);
+            }
+        } else {
+            throw new ResponseStatusException("Invalid Email", HttpStatus.NOT_FOUND);
+        }
+    }
+
+    public void resendOTP(OtpRequest otpRequest) throws Exception {
+        Optional<RegisterModel> registerModel = registerRepository.findRegisterByUserEmail(otpRequest.getEmail());
+        if(registerModel.isPresent()) {
+            byte attempt = registerModel.get().getAttempt();
+            byte resend = registerModel.get().getResend();
+            if(attempt >= 5 || resend >= 5) {
+                throw new ResponseStatusException("Email Blocked", HttpStatus.FORBIDDEN);
+            }
+
+            String otp = mailService.sendOTP(otpRequest.getEmail().trim(), "Registration With Quiz Application");
+
+            registerModel.get().setOtp(otp);
+            registerModel.get().setResend((byte) (resend+1));
+
+            registerRepository.save(registerModel.get());
+
+        } else {
+            throw new ResponseStatusException("Invalid Email", HttpStatus.NOT_FOUND);
+        }
+
     }
 }
