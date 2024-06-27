@@ -328,7 +328,7 @@ public class UserService implements UserDetailsService {
                 userRepository.insert(
                         UserModel.builder()
                                 .username(registerModel.get().getUser().getUsername())
-                                .password(new BCryptPasswordEncoder().encode(registerModel.get().getUser().getPassword()))
+                                .password(registerModel.get().getUser().getPassword())
                                 .email(registerModel.get().getUser().getEmail())
                                 .role(registerModel.get().getUser().getRole())
                                 .build()
