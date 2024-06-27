@@ -110,8 +110,9 @@ public class AuthController {
 
     @PostMapping("/authenticateEmail")
     public ResponseEntity<?> authenticateEmail(@RequestBody OtpRequest otp) {
+        AuthResponse authResponse;
         try {
-            userService.authenticateEmail(otp);
+            authResponse = userService.authenticateEmail(otp);
         } catch (ResponseStatusException e) {
             log.info(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), e.getCode());
@@ -119,7 +120,7 @@ public class AuthController {
             log.info(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity<>("success", HttpStatus.OK);
+        return new ResponseEntity<>(authResponse, HttpStatus.OK);
     }
 
     @PostMapping("/resendOTP")

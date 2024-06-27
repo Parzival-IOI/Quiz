@@ -1,5 +1,6 @@
 package com.group1.quiz.service;
 
+import com.group1.quiz.dataTransferObject.AuthResponse;
 import com.group1.quiz.dataTransferObject.OtpRequest;
 import com.group1.quiz.dataTransferObject.TableResponse;
 import com.group1.quiz.dataTransferObject.UserDTO.UserRegisterRequest;
@@ -25,6 +26,7 @@ import com.group1.quiz.util.ResponseStatusException;
 import com.group1.quiz.util.TableQueryBuilder;
 import java.security.Principal;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -42,6 +44,9 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -56,6 +61,7 @@ public class UserService implements UserDetailsService {
     private final QuestionRepository questionRepository;
     private final AnswerRepository answerRepository;
     private final MailService mailService;
+    private final JwtEncoder jwtEncoder;
     private final RegisterRepository registerRepository;
 
     @Override
@@ -308,7 +314,7 @@ public class UserService implements UserDetailsService {
         }
     }
 
-    public void authenticateEmail(OtpRequest otp) throws Exception {
+    public AuthResponse authenticateEmail(OtpRequest otp) throws Exception {
         Optional<RegisterModel> registerModel = registerRepository.findRegisterByUserEmail(otp.getEmail());
         if(registerModel.isPresent()) {
             byte attempt = registerModel.get().getAttempt();
@@ -333,7 +339,35 @@ public class UserService implements UserDetailsService {
                                 .role(registerModel.get().getUser().getRole())
                                 .build()
                 );
+                Instant rightNow = Instant.now();
+                String role = registerModel.get().getUser().getRole().getValue();
+                //access token
+                JwtClaimsSet accessToken = JwtClaimsSet.builder()
+                        .issuer("self")
+                        .issuedAt(rightNow)
+                        .expiresAt(rightNow.plusSeconds(15*60))
+                        .subject(registerModel.get().getUser().getUsername())
+                        .claim("role", "ROLE_" + role)
+                        .build();
+
+                //refresh token
+                JwtClaimsSet refreshToken = JwtClaimsSet.builder()
+                        .issuer("self")
+                        .issuedAt(rightNow)
+                        .expiresAt(rightNow.plus(1, ChronoUnit.HOURS))
+                        .subject(registerModel.get().getUser().getUsername())
+                        .claim("role", "ROLE_REFRESH_TOKEN")
+                        .claim("token", "refresh")
+                        .build();
+
+                String generatedAccessToken = this.jwtEncoder.encode(JwtEncoderParameters.from(accessToken)).getTokenValue();
+                String generatedRefreshToken = this.jwtEncoder.encode(JwtEncoderParameters.from(refreshToken)).getTokenValue();
                 registerRepository.deleteById(registerModel.get().getId());
+
+                return AuthResponse.builder()
+                        .accessToken(generatedAccessToken)
+                        .refreshToken(generatedRefreshToken)
+                        .build();
             }
             else {
                 registerModel.get().setAttempt((byte) (attempt + 1));
