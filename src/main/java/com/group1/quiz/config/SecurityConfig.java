@@ -2,6 +2,7 @@ package com.group1.quiz.config;
 
 
 import com.group1.quiz.enums.UserRoleEnum;
+import com.group1.quiz.service.UserImplementService;
 import com.group1.quiz.service.UserService;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
@@ -42,7 +43,7 @@ import org.springframework.security.web.SecurityFilterChain;
 @AllArgsConstructor
 public class SecurityConfig {
     private final RsaKeyProperties rsaKeyProperties;
-    private final UserService userService;
+    private final UserImplementService userService;
 
 
     @Bean

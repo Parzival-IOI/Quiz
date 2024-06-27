@@ -39,9 +39,6 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
@@ -52,7 +49,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class UserService implements UserDetailsService {
+public class UserService {
     private final UserRepository userRepository;
     private final MongoTemplate mongoTemplate;
     private final LoginRepository loginRepository;
@@ -61,22 +58,10 @@ public class UserService implements UserDetailsService {
     private final QuestionRepository questionRepository;
     private final AnswerRepository answerRepository;
     private final MailService mailService;
-    private final JwtEncoder jwtEncoder;
     private final RegisterRepository registerRepository;
+    private final JwtEncoder jwtEncoder;
 
-    @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Optional<UserModel> userModel = userRepository.findUserByUsername(username);
 
-        if(userModel.isPresent()) {
-            return org.springframework.security.core.userdetails.User.builder()
-                    .username(userModel.get().getUsername())
-                    .password(userModel.get().getPassword())
-                    .roles(userModel.get().getRole().getValue())
-                    .build();
-        }
-        throw new RuntimeException("User Not Found");
-    }
     public void createUser(UserRequest userDto) throws Exception {
         boolean isUserExist = userRepository.existsByUsername(userDto.getUsername());
         boolean isEmailExist = userRepository.existsByEmail(userDto.getEmail());
