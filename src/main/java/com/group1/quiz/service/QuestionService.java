@@ -45,8 +45,6 @@ public class QuestionService {
                         .question(createQuestionRequest.getQuestion())
                         .type(createQuestionRequest.getType())
                         .quizId(createQuestionRequest.getQuizId())
-                        .createdAt(Date.from(Instant.now()))
-                        .updatedAt(Date.from(Instant.now()))
                         .build();
                 questionRepository.insert(questionModel);
                 return questionModel;
@@ -67,15 +65,10 @@ public class QuestionService {
             Optional<QuizModel> quizModel = quizRepository.findById(questionModel.get().getQuizId());
             if(quizModel.isPresent()) {
                 if(quizModel.get().getUserId().equals(userModel.get().getId()) || userModel.get().getRole().equals(UserRoleEnum.ADMIN)) {
-                    QuestionModel question = QuestionModel.builder()
-                            .id(questionModel.get().getId())
-                            .question(updateQuestionRequest.getQuestion())
-                            .type(updateQuestionRequest.getType())
-                            .quizId(questionModel.get().getQuizId())
-                            .createdAt(questionModel.get().getCreatedAt())
-                            .updatedAt(Date.from(Instant.now()))
-                            .build();
-                    questionRepository.save(question);
+                    questionModel.get().setQuestion(updateQuestionRequest.getQuestion());
+                    questionModel.get().setType(updateQuestionRequest.getType());
+
+                    questionRepository.save(questionModel.get());
                 }
                 else {
                     throw new ResponseStatusException("Permission Denied", HttpStatus.FORBIDDEN);
@@ -119,8 +112,6 @@ public class QuestionService {
                         .question(createQuestionAndAnswerRequest.getQuestion())
                         .type(createQuestionAndAnswerRequest.getType())
                         .quizId(createQuestionAndAnswerRequest.getQuizId())
-                        .createdAt(Date.from(Instant.now()))
-                        .updatedAt(Date.from(Instant.now()))
                         .build();
                 questionRepository.insert(questionModel);
 
@@ -191,27 +182,20 @@ public class QuestionService {
                 if(quizModel.get().getUserId().equals(userModel.get().getId()) || userModel.get().getRole().equals(UserRoleEnum.ADMIN)) {
                     for(UpdateANQRequest updateANQRequest : updateQNARequest.getAnswer()) {
                         Optional<AnswerModel> answerModel = answerRepository.findById(updateANQRequest.getId());
-                        answerModel.ifPresent(model -> answerRepository.save(
-                                AnswerModel.builder()
-                                        .id(model.getId())
-                                        .questionId(model.getQuestionId())
-                                        .createdAt(model.getCreatedAt())
-                                        .answer(updateANQRequest.getAnswer())
-                                        .isCorrect(updateANQRequest.isCorrect())
-                                        .updatedAt(Date.from(Instant.now()))
-                                        .build()
-                        ));
+
+                        if(answerModel.isPresent()) {
+
+                            answerModel.get().setAnswer(updateANQRequest.getAnswer());
+                            answerModel.get().setCorrect(updateANQRequest.isCorrect());
+
+                            answerRepository.save(answerModel.get());
+                        }
                     }
-                    questionRepository.save(
-                            QuestionModel.builder()
-                                    .id(questionModel.get().getId())
-                                    .question(updateQNARequest.getQuestion())
-                                    .type(updateQNARequest.getType())
-                                    .quizId(questionModel.get().getQuizId())
-                                    .createdAt(questionModel.get().getCreatedAt())
-                                    .updatedAt(Date.from(Instant.now()))
-                                    .build()
-                    );
+
+                    questionModel.get().setQuestion(updateQNARequest.getQuestion());
+                    questionModel.get().setType(updateQNARequest.getType());
+
+                    questionRepository.save(questionModel.get());
                 }
                 else {
                     throw new ResponseStatusException("Permission Denied", HttpStatus.FORBIDDEN);

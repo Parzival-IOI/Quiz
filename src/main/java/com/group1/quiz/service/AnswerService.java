@@ -34,8 +34,6 @@ public class AnswerService {
                 .answer(createAnswerRequest.getAnswer())
                 .isCorrect(createAnswerRequest.isCorrect())
                 .questionId(createAnswerRequest.getQuestionId())
-                .createdAt(Date.from(Instant.now()))
-                .updatedAt(Date.from(Instant.now()))
                 .build();
         answerRepository.insert(answerModel);
         return answerModel;
@@ -45,15 +43,11 @@ public class AnswerService {
         Optional<AnswerModel> answerModel = answerRepository.findById(id);
         if (answerModel.isPresent()) {
             this.validateAnswer(principal.getName(), answerModel.get().getQuestionId());
-            AnswerModel answer = AnswerModel.builder()
-                    .id(answerModel.get().getId())
-                    .answer(updateAnswerRequest.getAnswer())
-                    .isCorrect(updateAnswerRequest.isCorrect())
-                    .questionId(answerModel.get().getQuestionId())
-                    .createdAt(answerModel.get().getCreatedAt())
-                    .updatedAt(Date.from(Instant.now()))
-                    .build();
-            answerRepository.save(answer);
+
+            answerModel.get().setAnswer(updateAnswerRequest.getAnswer());
+            answerModel.get().setCorrect(updateAnswerRequest.isCorrect());
+
+            answerRepository.save(answerModel.get());
         }
         else {
             throw new ResponseStatusException("Answer not found", HttpStatus.NOT_FOUND);

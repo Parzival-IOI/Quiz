@@ -220,16 +220,11 @@ public class QuizService {
             Optional<QuizModel> quizModel = quizRepository.findById(id);
             if (quizModel.isPresent()) {
                 if (quizModel.get().getUserId().equals(userModel.get().getId()) || userModel.get().getRole().equals(UserRoleEnum.ADMIN)) {
-                    QuizModel quiz = QuizModel.builder()
-                            .id(quizModel.get().getId())
-                            .name(updateQuizRequest.getName())
-                            .description(updateQuizRequest.getDescription())
-                            .visibility(updateQuizRequest.getVisibility())
-                            .userId(quizModel.get().getUserId())
-                            .createdAt(quizModel.get().getCreatedAt())
-                            .updatedAt(Date.from(Instant.now()))
-                            .build();
-                    quizRepository.save(quiz);
+                    quizModel.get().setName(updateQuizRequest.getName());
+                    quizModel.get().setDescription(updateQuizRequest.getDescription());
+                    quizModel.get().setVisibility(updateQuizRequest.getVisibility());
+
+                    quizRepository.save(quizModel.get());
 
                     List<PlayModel> playModels = playRepository.findByQuizId(quizModel.get().getId());
                     List<PlayModel> playModelsUpdate = playModels.stream().map(e -> this.UpdatePlayQuizName(e, quizModel.get().getName())).toList();

@@ -136,17 +136,13 @@ public class PlayService {
             PlayModel playModel = mongoTemplate.findOne(query, PlayModel.class);
 
             if(playModel != null) {
+                playModel.setScore(point);
+                playModel.setUsername(userModel.get().getUsername());
+                playModel.setQuizId(playQuizRequest.getId());
+                playModel.setQuizName(quizModel.get().getName());
+                playModel.setAnswers(playQuizRequest.getQuestions());
                 playRepository.save(
-                        PlayModel.builder()
-                                .id(playModel.getId())
-                                .score(point)
-                                .username(userModel.get().getUsername())
-                                .quizId(playQuizRequest.getId())
-                                .quizName(quizModel.get().getName())
-                                .answers(playQuizRequest.getQuestions())
-                                .createdAt(Date.from(Instant.now()))
-                                .updatedAt(Date.from(Instant.now()))
-                                .build()
+                        playModel
                 );
             }
             else {
@@ -157,8 +153,6 @@ public class PlayService {
                                 .quizId(playQuizRequest.getId())
                                 .quizName(quizModel.get().getName())
                                 .answers(playQuizRequest.getQuestions())
-                                .createdAt(Date.from(Instant.now()))
-                                .updatedAt(Date.from(Instant.now()))
                                 .build()
                 );
             }

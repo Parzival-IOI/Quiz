@@ -235,7 +235,7 @@ public class UserService implements UserDetailsService {
                 .role(role)
                 .build();
 
-        userRepository.save(user);
+        userRepository.insert(user);
     }
 
     public String registerUserOtp(UserRegisterRequest userRegisterRequest) throws Exception {
