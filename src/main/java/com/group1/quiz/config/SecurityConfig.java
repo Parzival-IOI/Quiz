@@ -61,6 +61,7 @@ public class SecurityConfig {
         AuthenticationManagerBuilder authenticationManagerBuilder = http.getSharedObject(AuthenticationManagerBuilder.class);
         authenticationManagerBuilder.userDetailsService(userService).passwordEncoder(bCryptPasswordEncoder());
         AuthenticationManager authenticationManager = authenticationManagerBuilder.build();
+        //handle route authentication and authorization
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authenticationManager(authenticationManager)
@@ -82,6 +83,9 @@ public class SecurityConfig {
                 .build();
     }
 
+    /**
+     * Custom JWT Authorization
+     */
     static class CustomAuthenticationConverter implements Converter<Jwt, AbstractAuthenticationToken> {
         public AbstractAuthenticationToken convert(Jwt jwt) {
             Collection<String> authorities = jwt.getClaimAsStringList("role");
@@ -96,11 +100,19 @@ public class SecurityConfig {
         }
     }
 
+    /**
+     * Decoder For JWT
+     * @return JWT Decoder
+     */
     @Bean
     JwtDecoder jwtDecoder() throws Exception {
         return NimbusJwtDecoder.withPublicKey(rsaKeyProperties.getRSAPublickey()).build();
     }
 
+    /**
+     * Encoder For JWT
+     * @return JWT Decoder
+     */
     @Bean
     JwtEncoder jwtEncoder() throws Exception {
         JWK jwk = new RSAKey.Builder(rsaKeyProperties.getRSAPublickey()).privateKey(rsaKeyProperties.getRSAPrivatekey()).build();

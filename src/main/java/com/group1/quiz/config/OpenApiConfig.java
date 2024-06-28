@@ -15,10 +15,18 @@ public class OpenApiConfig {
     private final String moduleName;
     private final String apiVersion;
 
+    /***
+     *Add Description for Spring Fox
+     */
     public OpenApiConfig(@Value("${spring.application.name}") String moduleName) {
         this.moduleName = moduleName;
         this.apiVersion = "1.0";
     }
+
+    /***
+     * Configuration for Authentication JWT Token on Spring Fox Open API
+     * @return OpenAPI
+     */
     @Bean
     public OpenAPI customOpenAPI() {
         final String securitySchemeName = "JWT Bearer Auth";
