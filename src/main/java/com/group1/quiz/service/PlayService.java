@@ -132,20 +132,20 @@ public class PlayService {
                     }
                 }
             }
-            Query query = Query.query(Criteria.where("username").is(userModel.get().getUsername())).addCriteria(Criteria.where("quizId").is(playQuizRequest.getId()));
-            PlayModel playModel = mongoTemplate.findOne(query, PlayModel.class);
 
-            if(playModel != null) {
-                playModel.setScore(point);
-                playModel.setUsername(userModel.get().getUsername());
-                playModel.setQuizId(playQuizRequest.getId());
-                playModel.setQuizName(quizModel.get().getName());
-                playModel.setAnswers(playQuizRequest.getQuestions());
-                playRepository.save(
-                        playModel
-                );
+            Optional<PlayModel> playModel = playRepository.findPlayModelByUsernameAndQuizId(userModel.get().getUsername(), playQuizRequest.getId());
+
+            if(playModel.isPresent()) {
+                log.info("not null {}", playModel.get().getId());
+                playModel.get().setScore(point);
+                playModel.get().setUsername(userModel.get().getUsername());
+                playModel.get().setQuizId(playQuizRequest.getId());
+                playModel.get().setQuizName(quizModel.get().getName());
+                playModel.get().setAnswers(playQuizRequest.getQuestions());
+                playRepository.save(playModel.get());
             }
             else {
+                log.info("null");
                 playRepository.insert(
                         PlayModel.builder()
                                 .score(point)
