@@ -21,6 +21,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
@@ -40,7 +41,7 @@ public class TokenService {
     public AuthResponse generateToken(LoginRequest loginRequest) throws  Exception {
         Optional<UserModel> user = userRepository.findUserByUsername(loginRequest.username());
         if(user.isPresent()) {
-            if(!user.get().getPassword().equals(loginRequest.password())) {
+            if(!user.get().getPassword().equals(new BCryptPasswordEncoder().encode(loginRequest.password()))) {
                 Optional<BlockedUserModel> blockedUserModel = blockedUserRepository.findByUsername(user.get().getUsername());
                 if(blockedUserModel.isPresent()) {
                     int attempts = blockedUserModel.get().getAttempt();
