@@ -25,6 +25,10 @@ public class TableQueryBuilder {
         this.size = size;
     }
 
+    /**
+     * Get query for searching, order by, order ASC DESC, and pagination
+     * @return Query
+     */
     public Query getQuery(){
         Query query = new Query();
         if(!StringUtils.isEmpty(search)) {

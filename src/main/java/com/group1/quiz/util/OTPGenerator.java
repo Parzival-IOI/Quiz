@@ -7,8 +7,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class OTPGenerator {
 
+    //Length of the Random Code to generate
     private final static Integer LENGTH = 6;
 
+    /**
+     * Generate OTP
+     * @return Supplier<String>
+     */
     public static Supplier<String> generate() {
         return () -> {
             Random random = new Random();

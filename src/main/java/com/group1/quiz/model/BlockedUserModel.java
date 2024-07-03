@@ -8,25 +8,22 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.annotation.Version;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.Field;
 
+@Document(value = "BlockedUsers")
 @AllArgsConstructor
 @NoArgsConstructor
-@Document(value="answers")
 @Builder
 @Data
-public class AnswerModel {
+public class BlockedUserModel {
     @Id
     private String id;
-    private String answer;
-    private boolean isCorrect;
-    private String questionId;
+    private String username;
+    private int attempt;
+    @Indexed(name="createdAt", expireAfterSeconds = 3600)
     @CreatedDate
     private Date createdAt;
     @LastModifiedDate
     private Date updatedAt;
-    @Version
-    private Integer version;
 }

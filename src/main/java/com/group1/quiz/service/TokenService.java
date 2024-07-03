@@ -2,8 +2,10 @@ package com.group1.quiz.service;
 
 import com.group1.quiz.dataTransferObject.AuthResponse;
 import com.group1.quiz.dataTransferObject.LoginRequest;
+import com.group1.quiz.model.BlockedUserModel;
 import com.group1.quiz.model.LoginModel;
 import com.group1.quiz.model.UserModel;
+import com.group1.quiz.repository.BlockedUserRepository;
 import com.group1.quiz.repository.LoginRepository;
 import com.group1.quiz.repository.UserRepository;
 import com.group1.quiz.util.ResponseStatusException;
@@ -33,8 +35,32 @@ public class TokenService {
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
     private final LoginRepository loginRepository;
+    private final BlockedUserRepository blockedUserRepository;
 
     public AuthResponse generateToken(LoginRequest loginRequest) throws  Exception {
+        Optional<UserModel> user = userRepository.findUserByUsername(loginRequest.username());
+        if(user.isPresent()) {
+            if(!user.get().getPassword().equals(loginRequest.password())) {
+                Optional<BlockedUserModel> blockedUserModel = blockedUserRepository.findByUsername(user.get().getUsername());
+                if(blockedUserModel.isPresent()) {
+                    int attempts = blockedUserModel.get().getAttempt();
+                    if(attempts > 5) {
+                        throw new ResponseStatusException("Blocked", HttpStatus.UNAUTHORIZED);
+                    } else {
+                        blockedUserModel.get().setAttempt(attempts + 1);
+                        blockedUserRepository.save(blockedUserModel.get());
+                    }
+                } else {
+                    blockedUserRepository.insert(
+                            BlockedUserModel.builder()
+                                    .username(user.get().getUsername())
+                                    .attempt(1)
+                                    .build()
+                    );
+                }
+            }
+        }
+
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.username(), loginRequest.password()));
         Instant now = Instant.now();
         String role = authentication.getAuthorities().stream()

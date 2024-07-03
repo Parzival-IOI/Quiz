@@ -161,6 +161,9 @@ public class QuizService {
     public QuizResponse createQuiz(CreateQuizRequest createQuizRequest, Principal principal) throws Exception {
         Optional<UserModel> userModel = userRepository.findUserByUsername(principal.getName());
         if (userModel.isPresent()) {
+            if(userModel.get().getRole().equals(UserRoleEnum.STUDENT)) {
+                throw new ResponseStatusException("Permission Denied", HttpStatus.FORBIDDEN);
+            }
             QuizModel quizModel = new QuizModel();
             quizModel.setName(createQuizRequest.getName());
             quizModel.setDescription(createQuizRequest.getDescription());

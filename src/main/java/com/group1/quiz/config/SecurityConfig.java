@@ -21,6 +21,7 @@ import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -41,6 +42,7 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 @EnableWebSecurity
 @AllArgsConstructor
+@EnableMethodSecurity
 public class SecurityConfig {
     private final RsaKeyProperties rsaKeyProperties;
     private final UserImplementService userService;
@@ -62,6 +64,9 @@ public class SecurityConfig {
         authenticationManagerBuilder.userDetailsService(userService).passwordEncoder(bCryptPasswordEncoder());
         AuthenticationManager authenticationManager = authenticationManagerBuilder.build();
         //handle route authentication and authorization
+        //Allow Some Login, Register and Swagger Ui for testing API
+        //Allow Only Refresh token to actually get refresh token
+        //Allow Admin only to Control user API
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authenticationManager(authenticationManager)
