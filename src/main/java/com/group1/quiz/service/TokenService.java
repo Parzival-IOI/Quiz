@@ -41,7 +41,7 @@ public class TokenService {
     public AuthResponse generateToken(LoginRequest loginRequest) throws  Exception {
         Optional<UserModel> user = userRepository.findUserByUsername(loginRequest.username());
         if(user.isPresent()) {
-            if(!user.get().getPassword().equals(new BCryptPasswordEncoder().encode(loginRequest.password()))) {
+            if(!new BCryptPasswordEncoder().matches(loginRequest.password(), user.get().getPassword())) {
                 Optional<BlockedUserModel> blockedUserModel = blockedUserRepository.findByUsername(user.get().getUsername());
                 if(blockedUserModel.isPresent()) {
                     int attempts = blockedUserModel.get().getAttempt();
