@@ -59,6 +59,10 @@ public class TokenService {
                     );
                 }
             }
+            else {
+                Optional<BlockedUserModel> blockedUserModel = blockedUserRepository.findByUsername(user.get().getUsername());
+                blockedUserModel.ifPresent(userModel -> blockedUserRepository.deleteById(userModel.getId()));
+            }
         }
 
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.username(), loginRequest.password()));
