@@ -5,7 +5,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
@@ -17,19 +20,13 @@ import org.springframework.data.mongodb.core.mapping.Field;
 public class AnswerModel {
     @Id
     private String id;
-
-    @Field(name="answer")
     private String answer;
-
-    @Field(name="isCorrect")
     private boolean isCorrect;
-
-    @Field(name="questionId")
     private String questionId;
-
-    @Field(name="createdAt")
+    @CreatedDate
     private Date createdAt;
-
-    @Field(name="updatedAt")
+    @LastModifiedDate
     private Date updatedAt;
+    @Version
+    private Integer version;
 }

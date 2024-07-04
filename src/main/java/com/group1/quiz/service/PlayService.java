@@ -6,6 +6,9 @@ import com.group1.quiz.dataTransferObject.PlayDTO.PlayQuestionResponse;
 import com.group1.quiz.dataTransferObject.PlayDTO.PlayQuizRequest;
 import com.group1.quiz.dataTransferObject.PlayDTO.PlayQuizResponse;
 import com.group1.quiz.dataTransferObject.PlayDTO.PlayResponse;
+import com.group1.quiz.dataTransferObject.PlayDTO.PlaySubmitResponse;
+import com.group1.quiz.dataTransferObject.PlayDTO.PlayedAnswer;
+import com.group1.quiz.dataTransferObject.PlayDTO.PlayedAnswers;
 import com.group1.quiz.dataTransferObject.PlayDTO.PlaysResponse;
 import com.group1.quiz.dataTransferObject.TableResponse;
 import com.group1.quiz.enums.OrderEnum;
@@ -26,8 +29,10 @@ import com.group1.quiz.util.ResponseStatusException;
 import com.group1.quiz.util.TableQueryBuilder;
 import java.security.Principal;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -91,14 +96,18 @@ public class PlayService {
                 .build();
     }
 
-    public int playQuizSummit(PlayQuizRequest playQuizRequest, Principal principal) throws Exception {
+    public PlaySubmitResponse playQuizSummit(PlayQuizRequest playQuizRequest, Principal principal) throws Exception {
         int point = 0;
         Optional<UserModel> userModel = userRepository.findUserByUsername(principal.getName());
-        if (quizRepository.existsById(playQuizRequest.getId()) && userModel.isPresent()) {
+        Optional<QuizModel> quizModel = quizRepository.findById(playQuizRequest.getId());
+        if (quizModel.isPresent() && userModel.isPresent()) {
             List<PlayQuestionRequest> questionRequests = playQuizRequest.getQuestions();
+            List<String> questionDuplicate = new ArrayList<>();
             for (PlayQuestionRequest questionRequest : questionRequests) {
                 Optional<QuestionModel> questionModel = questionRepository.findById(questionRequest.getQuestionId());
                 if(questionModel.isPresent()) {
+
+//
 //                    List<AnswerModel> answerModels = answerRepository.findByQuestionId(questionRequest.getQuestionId());
 //                    for (AnswerModel answerModel : answerModels) {
 //                        for(String answerId : questionRequest.getAnswerId()) {
@@ -107,42 +116,53 @@ public class PlayService {
 //                            }
 //                        }
 //                    }
+
+                    if(questionDuplicate.contains(questionModel.get().getId())) {
+                        continue;
+                    } else {
+                        questionDuplicate.add(questionModel.get().getId());
+                    }
                     Optional<AnswerModel> answerModel = answerRepository.findById(questionRequest.getAnswerId());
                     if(answerModel.isPresent()) {
-                        if(answerModel.get().isCorrect()) {
-                            point++;
+                        if(questionModel.get().getId().equals(answerModel.get().getQuestionId())) {
+                            if(answerModel.get().isCorrect()) {
+                                point++;
+                            }
                         }
                     }
                 }
             }
-            Query query = Query.query(Criteria.where("userId").is(userModel.get().getId())).addCriteria(Criteria.where("quizId").is(playQuizRequest.getId()));
-            PlayModel playModel = mongoTemplate.findOne(query, PlayModel.class);
 
-            if(playModel != null) {
-                playRepository.save(
-                        PlayModel.builder()
-                                .id(playQuizRequest.getId())
-                                .score(point)
-                                .userId(userModel.get().getId())
-                                .quizId(playQuizRequest.getId())
-                                .createdAt(Date.from(Instant.now()))
-                                .updatedAt(Date.from(Instant.now()))
-                                .build()
-                );
+            Optional<PlayModel> playModel = playRepository.findPlayModelByUsernameAndQuizId(userModel.get().getUsername(), playQuizRequest.getId());
+
+            if(playModel.isPresent()) {
+                log.info("not null {}", playModel.get().getId());
+                playModel.get().setScore(point);
+                playModel.get().setUsername(userModel.get().getUsername());
+                playModel.get().setQuizId(playQuizRequest.getId());
+                playModel.get().setQuizName(quizModel.get().getName());
+                playModel.get().setAnswers(playQuizRequest.getQuestions());
+                playRepository.save(playModel.get());
             }
             else {
+                log.info("null");
                 playRepository.insert(
                         PlayModel.builder()
                                 .score(point)
-                                .userId(userModel.get().getId())
+                                .username(userModel.get().getUsername())
                                 .quizId(playQuizRequest.getId())
-                                .createdAt(Date.from(Instant.now()))
-                                .updatedAt(Date.from(Instant.now()))
+                                .quizName(quizModel.get().getName())
+                                .answers(playQuizRequest.getQuestions())
                                 .build()
                 );
             }
+            // need to implement when add score column in questions table
+            int total = questionRepository.findByQuizId(playQuizRequest.getId()).size();
 
-            return point;
+            return PlaySubmitResponse.builder()
+                    .total(total)
+                    .score(point)
+                    .build();
         }
         else {
             throw new ResponseStatusException("Quiz/User Not Found", HttpStatus.NOT_FOUND);
@@ -153,22 +173,54 @@ public class PlayService {
         Optional<PlayModel> playModel = playRepository.findById(id);
         Optional<UserModel> userModel = userRepository.findUserByUsername(principal.getName());
         if(playModel.isPresent() && userModel.isPresent()) {
-            if(playModel.get().getUserId().equals(userModel.get().getId()))
+            Optional<QuizModel> quizModel = quizRepository.findById(playModel.get().getQuizId());
+            if(quizModel.isEmpty()) {
+                throw new ResponseStatusException("Quiz Not Found", HttpStatus.NOT_FOUND);
+            }
+            if(playModel.get().getUsername().equals(userModel.get().getUsername()) || quizModel.get().getUserId().equals(userModel.get().getId()) || userModel.get().getRole().equals(UserRoleEnum.ADMIN))
                 return playResponseMapping(playModel.get());
             throw new ResponseStatusException("Permission Denied", HttpStatus.BAD_REQUEST);
         }
         else {
-            throw new ResponseStatusException("Play Not Found", HttpStatus.NOT_FOUND);
+            throw new ResponseStatusException("Play/User Not Found", HttpStatus.NOT_FOUND);
         }
     }
 
     public PlayResponse playResponseMapping(PlayModel playModel) {
+        List<PlayedAnswers> playedAnswers = playModel.getAnswers().stream().map(this::playAnswerMapping).toList();
+        String description = "";
+        Optional<QuizModel> quizModel = quizRepository.findById(playModel.getQuizId());
+        if(quizModel.isPresent()) {
+            description = quizModel.get().getDescription();
+        }
         return PlayResponse.builder()
                 .id(playModel.getId())
                 .score(playModel.getScore())
+                .answered(playedAnswers)
                 .quizId(playModel.getQuizId())
+                .quizName(playModel.getQuizName())
+                .quizDescription(description)
                 .createdAt(playModel.getCreatedAt())
                 .updatedAt(playModel.getUpdatedAt())
+                .build();
+    }
+
+    private PlayedAnswers playAnswerMapping(PlayQuestionRequest playQuestionRequest) {
+        List<AnswerModel> answerModel = answerRepository.findByQuestionId(playQuestionRequest.getQuestionId());
+        List<PlayedAnswer> playedAnswers = answerModel.stream().map(e->this.playAnswerMapping(e, playQuestionRequest.getAnswerId())).toList();
+        Optional<QuestionModel> questionModel = questionRepository.findById(playQuestionRequest.getQuestionId());
+        return questionModel.map(model -> PlayedAnswers.builder()
+                .question(model.getQuestion())
+                .type(model.getType())
+                .answers(playedAnswers)
+                .build()).orElse(null);
+    }
+
+    private PlayedAnswer playAnswerMapping(AnswerModel answerModel, String answerId) {
+        return PlayedAnswer.builder()
+                .answer(answerModel.getAnswer())
+                .isCorrect(answerModel.isCorrect())
+                .isPick(answerModel.getId().equals(answerId))
                 .build();
     }
 
@@ -177,14 +229,17 @@ public class PlayService {
         if(userModel.isPresent()) {
             if (userModel.get().getId().equals(UserRoleEnum.ADMIN.getValue()))
                 throw new ResponseStatusException("Permission Denied", HttpStatus.FORBIDDEN);
+        } else {
+            throw new ResponseStatusException("User Not Found", HttpStatus.NOT_FOUND);
         }
         long count;
-        TableQueryBuilder tableQueryBuilder = new TableQueryBuilder(search, "userId", orderBy.getValue(), order, page, size);
+        TableQueryBuilder tableQueryBuilder = new TableQueryBuilder(search, "quizName", orderBy.getValue(), order, page, size);
 
         List<PlayModel> playModels = mongoTemplate.find(tableQueryBuilder.getQuery(), PlayModel.class);
 
         if (!StringUtils.isEmpty(search)) {
-            count = playModels.size();
+            Query query = Query.query(Criteria.where("quizName").regex(".*"+search+".*", "i"));
+            count = mongoTemplate.find(query, PlayModel.class).size();
         } else {
             count = playRepository.countAllDocuments();
         }
@@ -199,6 +254,7 @@ public class PlayService {
                 .id(playModel.getId())
                 .score(playModel.getScore())
                 .quizId(playModel.getQuizId())
+                .quizName(playModel.getQuizName())
                 .createdAt(playModel.getCreatedAt())
                 .updatedAt(playModel.getUpdatedAt())
                 .build();
@@ -211,9 +267,9 @@ public class PlayService {
             throw new ResponseStatusException("Permission Denied", HttpStatus.FORBIDDEN);
         }
         Query query = new Query();
-        query.addCriteria(Criteria.where("userId").is(userModel.get().getId()));
+        query.addCriteria(Criteria.where("username").is(userModel.get().getUsername()));
         if(!StringUtils.isEmpty(search)) {
-            query.addCriteria(Criteria.where("name").regex(".*"+search+".*", "i"));
+            query.addCriteria(Criteria.where("quizName").regex(".*"+search+".*", "i"));
         }
         if(order.equals(OrderEnum.DESC)) {
             query.with(Sort.by(Sort.Direction.DESC, orderBy.getValue()));
@@ -225,9 +281,11 @@ public class PlayService {
         List<PlayModel> playModels = mongoTemplate.find(query, PlayModel.class);
 
         if (!StringUtils.isEmpty(search)) {
-            count = playModels.size();
+            Query querySearch = Query.query(Criteria.where("username").is(userModel.get().getUsername()))
+                    .addCriteria(Criteria.where("quizName").regex(".*"+search+".*", "i"));
+            count = mongoTemplate.find(querySearch, PlayModel.class).size();
         } else {
-            count = playRepository.countAllDocuments();
+            count = playRepository.findAllByUsername(userModel.get().getUsername()).size();
         }
         return TableResponse.<PlaysResponse>builder()
                 .data(playModels.stream().map(this::playsResponseMapping).toList())
@@ -239,7 +297,7 @@ public class PlayService {
         Optional<PlayModel> playModel = playRepository.findById(id);
         Optional<UserModel> userModel = userRepository.findUserByUsername(principal.getName());
         if(playModel.isPresent() && userModel.isPresent()) {
-            if(playModel.get().getUserId().equals(userModel.get().getId()) || userModel.get().getRole().equals( UserRoleEnum.ADMIN)) {
+            if(playModel.get().getUsername().equals(userModel.get().getUsername()) || userModel.get().getRole().equals( UserRoleEnum.ADMIN)) {
                 playRepository.deleteById(id);
             }
             else {

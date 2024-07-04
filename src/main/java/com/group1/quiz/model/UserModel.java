@@ -9,8 +9,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.annotation.Transient;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
@@ -25,25 +28,24 @@ public class UserModel {
     private String id;
 
     @Indexed(unique = true)
-    @Field(name="username")
     private String username;
 
-    @Field(name="password")
     private String password;
 
     @Email(regexp = "[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,3}", flags = Pattern.Flag.CASE_INSENSITIVE)
     @Indexed(unique = true)
-    @Field(name="email")
     private String email;
 
-    @Field(name="role")
     private UserRoleEnum role;
 
-    @Field(name="createdAt")
+    @CreatedDate
     private Date createdAt;
 
-    @Field(name="updatedAt")
+    @LastModifiedDate
     private Date updatedAt;
+
+    @Version
+    private Integer version;
 
     public UserModel(UserRequest userDto) {
         this.username = userDto.getUsername();

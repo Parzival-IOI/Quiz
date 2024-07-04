@@ -14,7 +14,7 @@
     <name>quiz</name>
     <description>quiz</description>
     <properties>
-        <java.version>17</java.version>
+        <java.version>21</java.version>
     </properties>
     <dependencies>
         <dependency>
@@ -23,6 +23,7 @@
             <optional>true</optional>
         </dependency>
 
+<!--        MongoDB-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-mongodb</artifactId>
@@ -33,6 +34,7 @@
             <version>4.2.2</version>
         </dependency>
 
+<!--        Oauth2 for JWT Token-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
@@ -40,7 +42,7 @@
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-oauth2-jose</artifactId>
-            <version>6.2.3</version>
+            <version>6.3.1</version>
         </dependency>
 
         <dependency>
@@ -63,6 +65,7 @@
             <scope>test</scope>
         </dependency>
 
+<!--        Helper-->
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
@@ -73,11 +76,28 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
+<!--        to get .env-->
         <dependency>
             <groupId>me.paulschwarz</groupId>
             <artifactId>spring-dotenv</artifactId>
             <version>4.0.0</version>
         </dependency>
+
+<!--        mail-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+            <version>3.3.1</version>
+        </dependency>
+
+<!--        HTML Template-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+            <version>3.3.1</version>
+        </dependency>
+
+
 
     </dependencies>
 

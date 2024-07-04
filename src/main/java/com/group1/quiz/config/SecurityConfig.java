@@ -2,6 +2,7 @@ package com.group1.quiz.config;
 
 
 import com.group1.quiz.enums.UserRoleEnum;
+import com.group1.quiz.service.UserImplementService;
 import com.group1.quiz.service.UserService;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
@@ -20,6 +21,7 @@ import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -40,9 +42,10 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 @EnableWebSecurity
 @AllArgsConstructor
+@EnableMethodSecurity
 public class SecurityConfig {
     private final RsaKeyProperties rsaKeyProperties;
-    private final UserService userService;
+    private final UserImplementService userService;
 
 
     @Bean
@@ -60,15 +63,20 @@ public class SecurityConfig {
         AuthenticationManagerBuilder authenticationManagerBuilder = http.getSharedObject(AuthenticationManagerBuilder.class);
         authenticationManagerBuilder.userDetailsService(userService).passwordEncoder(bCryptPasswordEncoder());
         AuthenticationManager authenticationManager = authenticationManagerBuilder.build();
+        //handle route authentication and authorization
+        //Allow Some Login, Register and Swagger Ui for testing API
+        //Allow Only Refresh token to actually get refresh token
+        //Allow Admin only to Control user API
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authenticationManager(authenticationManager)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth", "/register").permitAll()
+                        .requestMatchers("/auth", "/register", "/v2/register", "/authenticateEmail", "/resendOTP").permitAll()
                         .requestMatchers("/migrate").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/refreshToken").hasRole("REFRESH_TOKEN")
                         .requestMatchers("/api/user/**").hasRole(UserRoleEnum.ADMIN.getValue())
+                        .requestMatchers("/api/mail/**").hasRole(UserRoleEnum.ADMIN.getValue())
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -80,6 +88,9 @@ public class SecurityConfig {
                 .build();
     }
 
+    /**
+     * Custom JWT Authorization
+     */
     static class CustomAuthenticationConverter implements Converter<Jwt, AbstractAuthenticationToken> {
         public AbstractAuthenticationToken convert(Jwt jwt) {
             Collection<String> authorities = jwt.getClaimAsStringList("role");
@@ -94,11 +105,19 @@ public class SecurityConfig {
         }
     }
 
+    /**
+     * Decoder For JWT
+     * @return JWT Decoder
+     */
     @Bean
     JwtDecoder jwtDecoder() throws Exception {
         return NimbusJwtDecoder.withPublicKey(rsaKeyProperties.getRSAPublickey()).build();
     }
 
+    /**
+     * Encoder For JWT
+     * @return JWT Decoder
+     */
     @Bean
     JwtEncoder jwtEncoder() throws Exception {
         JWK jwk = new RSAKey.Builder(rsaKeyProperties.getRSAPublickey()).privateKey(rsaKeyProperties.getRSAPrivatekey()).build();

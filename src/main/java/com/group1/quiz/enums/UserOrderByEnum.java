@@ -4,9 +4,9 @@ import lombok.Getter;
 
 @Getter
 public enum UserOrderByEnum {
-    NAME("name"),
+    NAME("username"),
     ROLE("role"),
-    DATE("created_at");
+    DATE("createdAt");
 
     private final String value;
     UserOrderByEnum(String value) {

@@ -2,8 +2,10 @@ package com.group1.quiz.service;
 
 import com.group1.quiz.dataTransferObject.AuthResponse;
 import com.group1.quiz.dataTransferObject.LoginRequest;
+import com.group1.quiz.model.BlockedUserModel;
 import com.group1.quiz.model.LoginModel;
 import com.group1.quiz.model.UserModel;
+import com.group1.quiz.repository.BlockedUserRepository;
 import com.group1.quiz.repository.LoginRepository;
 import com.group1.quiz.repository.UserRepository;
 import com.group1.quiz.util.ResponseStatusException;
@@ -19,6 +21,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
@@ -33,8 +36,36 @@ public class TokenService {
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
     private final LoginRepository loginRepository;
+    private final BlockedUserRepository blockedUserRepository;
 
     public AuthResponse generateToken(LoginRequest loginRequest) throws  Exception {
+        Optional<UserModel> user = userRepository.findUserByUsername(loginRequest.username());
+        if(user.isPresent()) {
+            if(!new BCryptPasswordEncoder().matches(loginRequest.password(), user.get().getPassword())) {
+                Optional<BlockedUserModel> blockedUserModel = blockedUserRepository.findByUsername(user.get().getUsername());
+                if(blockedUserModel.isPresent()) {
+                    int attempts = blockedUserModel.get().getAttempt();
+                    if(attempts > 5) {
+                        throw new ResponseStatusException("Blocked", HttpStatus.UNAUTHORIZED);
+                    } else {
+                        blockedUserModel.get().setAttempt(attempts + 1);
+                        blockedUserRepository.save(blockedUserModel.get());
+                    }
+                } else {
+                    blockedUserRepository.insert(
+                            BlockedUserModel.builder()
+                                    .username(user.get().getUsername())
+                                    .attempt(1)
+                                    .build()
+                    );
+                }
+            }
+            else {
+                Optional<BlockedUserModel> blockedUserModel = blockedUserRepository.findByUsername(user.get().getUsername());
+                blockedUserModel.ifPresent(userModel -> blockedUserRepository.deleteById(userModel.getId()));
+            }
+        }
+
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.username(), loginRequest.password()));
         Instant now = Instant.now();
         String role = authentication.getAuthorities().stream()
@@ -44,7 +75,7 @@ public class TokenService {
         JwtClaimsSet accessToken = JwtClaimsSet.builder()
                 .issuer("self")
                 .issuedAt(now)
-                .expiresAt(now.plusSeconds(15))
+                .expiresAt(now.plusSeconds(15*60))
                 .subject(authentication.getName())
                 .claim("role", role)
                 .build();
@@ -104,7 +135,7 @@ public class TokenService {
             JwtClaimsSet accessToken = JwtClaimsSet.builder()
                     .issuer("self")
                     .issuedAt(now)
-                    .expiresAt(now.plusSeconds(15))
+                    .expiresAt(now.plusSeconds(15*60))
                     .subject(userModel.get().getUsername())
                     .claim("role", "ROLE_" + role)
                     .build();

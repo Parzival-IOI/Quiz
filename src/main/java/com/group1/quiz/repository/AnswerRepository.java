@@ -6,4 +6,5 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 
 public interface AnswerRepository extends MongoRepository<AnswerModel, String> {
     List<AnswerModel> findByQuestionId(String questionId);
+    void deleteAllByQuestionId(String questionId);
 }
