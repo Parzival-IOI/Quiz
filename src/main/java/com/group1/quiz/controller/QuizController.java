@@ -3,6 +3,7 @@ package com.group1.quiz.controller;
 import com.group1.quiz.dataTransferObject.PlayDTO.PlaysPlayerResponse;
 import com.group1.quiz.dataTransferObject.PlayDTO.PlaysResponse;
 import com.group1.quiz.dataTransferObject.QuizDTO.UpdateQuizRequest;
+import com.group1.quiz.dataTransferObject.QuizDTO.UpdateQuizRequest2;
 import com.group1.quiz.enums.OrderEnum;
 import com.group1.quiz.enums.PlayOrderByEnum;
 import com.group1.quiz.enums.RowLengthEnum;
@@ -133,6 +134,20 @@ public class QuizController {
     public ResponseEntity<?> updateQuiz(@PathVariable String id, @RequestBody UpdateQuizRequest updateQuizRequest, Principal principal) {
         try {
             quizService.updateQuiz(id, updateQuizRequest, principal);
+        } catch (ResponseStatusException e) {
+            log.info(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), e.getCode());
+        } catch(Exception e) {
+            log.info(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return new ResponseEntity<>("success", HttpStatus.OK);
+    }
+
+    @PutMapping("/v2/update/{id}")
+    public ResponseEntity<?> updateQuiz2(@PathVariable String id, @RequestBody UpdateQuizRequest2 updateQuizRequest2, Principal principal) {
+        try {
+            quizService.updateQuiz2(id, updateQuizRequest2, principal);
         } catch (ResponseStatusException e) {
             log.info(e.getMessage());
             return new ResponseEntity<>(e.getMessage(), e.getCode());
