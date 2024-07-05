@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mailer</title>
+    <style>
+        * {
+            background: rgb(0, 1, 17);
+        }
+        body {
+            margin: 0;
+            padding: 1rem;
+            font-family: sans-serif;
+        }
+        main {
+            max-width: 28rem;
+            width: 100%;
+            min-height: 100px;
+            margin: 0 auto 0 auto;
+            background: white;
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+        .top-header {
+            background: #001972;
+            height: 0.5rem;
+        }
+        .header {
+            color: rgb(0, 1, 17);
+            background-color: white;
+            font-weight: 800;
+            font-size: 16px ;
+            padding: 0.5rem 1rem;
+            text-align: center;
+        }
+        .hr {
+            background: #001972;
+            height: 0.2rem;
+        }
+        .message {
+            color: rgb(0, 1, 17);
+            background-color: white;
+            font-weight: 400;
+            font-size: 12px ;
+            text-align: center;
+        }
+        .message > div:first-child {
+            padding: 1rem 0 1rem 0;
+        }
+        .message > div {
+            background-color: white;
+            padding: 0 0 1rem 0;
+        }
+        span {
+            background-color: white;
+        }
+    </style>
+</head>
+<body>
+<main>
+    <section class="top-header"></section>
+    <section class="header">Quiz Application</section>
+    <div class="hr"></div>
+    <section class="message">
+        <div>Your OTP Code is : <span th:text="${OTP}">07978978</span></div>
+        <div>note that you have a time frame of 5min to enter the code</div>
+    </section>
+</main>
+</body>
+</html>

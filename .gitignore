@@ -32,6 +32,12 @@ build/
 .vscode/
 
 ### secret file ###
+
 .env
+*.env
+
+.env*.local
 .env.local
+*.env.local
+
 /DB
