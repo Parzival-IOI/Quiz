@@ -29,9 +29,13 @@ import com.group1.quiz.repository.PlayRepository;
 import com.group1.quiz.repository.QuestionRepository;
 import com.group1.quiz.repository.QuizRepository;
 import com.group1.quiz.repository.UserRepository;
+import com.group1.quiz.util.QuizExcelExporter;
 import com.group1.quiz.util.ResponseStatusException;
 import com.group1.quiz.util.TableQueryBuilder;
+import jakarta.servlet.http.HttpServletResponse;
 import java.security.Principal;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
@@ -450,5 +454,34 @@ public class QuizService {
         else {
             throw new ResponseStatusException("User not found", HttpStatus.NOT_FOUND);
         }
+    }
+
+    public void generateExcel(String id, Principal principal, HttpServletResponse response) throws Exception {
+
+        Optional<QuizModel> quizModel = quizRepository.findById(id);
+        Optional<UserModel> userModel = userRepository.findUserByUsername(principal.getName());
+
+        if(quizModel.isEmpty() || userModel.isEmpty()) {
+            throw new ResponseStatusException("Quiz/User Not Found", HttpStatus.NOT_FOUND);
+        }
+
+        if(!quizModel.get().getUserId().equals(userModel.get().getId())) {
+            throw new ResponseStatusException("Permission Denied", HttpStatus.FORBIDDEN);
+        }
+
+        response.setContentType("application/octet-stream");
+        DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
+        String currentDateTime = dateFormatter.format(new Date());
+
+        String headerKey = "Content-Disposition";
+        String headerValue = "attachment; filename=Quiz_"+ quizModel.get().getName() + "_" + currentDateTime + ".xlsx";
+        response.setHeader(headerKey, headerValue);
+
+        List<PlayModel> plays = playRepository.findAllByQuizId(id);
+
+        QuizExcelExporter excelExporter = new QuizExcelExporter(plays, userRepository);
+
+        excelExporter.export(response);
+
     }
 }

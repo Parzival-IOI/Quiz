@@ -14,12 +14,20 @@ import com.group1.quiz.dataTransferObject.TableResponse;
 import com.group1.quiz.dataTransferObject.QuizDTO.QuizzesResponse;
 import com.group1.quiz.service.QuizService;
 import com.group1.quiz.util.ResponseStatusException;
+import jakarta.servlet.http.HttpServletResponse;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.Principal;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -170,5 +178,20 @@ public class QuizController {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return new ResponseEntity<>("success", HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_TEACHER')")
+    @GetMapping("/export/{id}")
+    public ResponseEntity<?> exportQuiz(@PathVariable String id, Principal principal, HttpServletResponse response) {
+        try {
+            this.quizService.generateExcel(id, principal, response);
+            return new ResponseEntity<>("success", HttpStatus.OK);
+        } catch (ResponseStatusException e) {
+            log.info(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), e.getCode());
+        } catch(Exception e) {
+            log.info(e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }
